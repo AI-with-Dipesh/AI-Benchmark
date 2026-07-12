@@ -1,0 +1,25 @@
+- name: "clarity_and_flow"
+  category: "general"
+  version: "1.0.0"
+  description: >
+    Evaluate clarity, instruction following, and communication quality for a short
+    instruction-following task. Response should be concise and on-topic.
+  system: |
+    Evaluate the assistant response for clarity, instruction following, and communication quality.
+  user: |
+    Task: {{task}}
+    Response: """{{response}}"""
+    Score from 0.0 to 1.0. Return JSON only: {"raw_score": 0.0-1.0, "normalized": 0.0-1.0, "evaluation": "", "recommendations": ["", ""]}.
+  expected: "concise, clear, on-topic"
+
+- name: "instruction_alignment"
+  category: "general"
+  version: "1.0.0"
+  description: "Evaluate whether the response addresses the exact requested constraints."
+  system: |
+    Judge whether the response follows the instruction exactly.
+  user: |
+    Instruction: {{instruction}}
+    Response: """{{response}}"""
+    Score from 0.0 to 1.0. Return JSON only: {"raw_score": 0.0-1.0, "normalized": 0.0-1.0, "evaluation": "", "recommendations": ["", ""]}.
+  expected: "matches instruction, relevant"

@@ -30,6 +30,9 @@ class BenchmarkName(str, Enum):
     CONTEXT = "context"
     TOOL_CALLING = "tool_calling"
     RELIABILITY = "reliability"
+    GENERAL = "general"
+    CODE_REVIEW = "code_review"
+    INSTRUCTION = "instruction"
 
 
 class PluginCategory(str, Enum):

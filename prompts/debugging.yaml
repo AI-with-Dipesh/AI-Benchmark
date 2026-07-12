@@ -1,0 +1,23 @@
+- name: "bug_detection"
+  category: "debugging"
+  version: "1.0.0"
+  description: "Evaluate bug detection and root-cause analysis quality."
+  system: |
+    You are evaluating a debugging response. Score objectively from 0.0 to 1.0.
+  user: |
+    Bug report: {{bug_report}}
+    Response: """{{response}}"""
+    Score JSON only: {"raw_score": 0.0-1.0, "normalized": 0.0-1.0, "evaluation": "", "recommendations": ["", ""]}.
+  expected: "root cause, fix"
+
+- name: "patch_quality"
+  category: "debugging"
+  version: "1.0.0"
+  description: "Evaluate correctness and clarity of a proposed fix."
+  system: |
+    Evaluate whether the proposed fix is correct, minimal, and explained clearly.
+  user: |
+    Code: {{code}}
+    Response: """{{response}}"""
+    Score JSON only: {"raw_score": 0.0-1.0, "normalized": 0.0-1.0, "evaluation": "", "recommendations": ["", ""]}.
+  expected: "patch, explanation"

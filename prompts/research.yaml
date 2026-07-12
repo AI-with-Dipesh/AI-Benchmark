@@ -1,0 +1,23 @@
+- name: "summarization_quality"
+  category: "research"
+  version: "1.0.0"
+  description: "Evaluate summarization, key point extraction, and factual consistency."
+  system: |
+    Evaluate accuracy, organization, and completeness of a research summary.
+  user: |
+    Source: {{source_text}}
+    Response: """{{response}}"""
+    Score JSON only: {"raw_score": 0.0-1.0, "normalized": 0.0-1.0, "evaluation": "", "recommendations": ["", ""]}.
+  expected: "accurate summary, key points, organized"
+
+- name: "factual_consistency"
+  category: "research"
+  version: "1.0.0"
+  description: "Evaluate factual consistency and citation quality in answers."
+  system: |
+    Judge factual accuracy and reasoning quality.
+  user: |
+    Question: {{question}}
+    Response: """{{response}}"""
+    Score JSON only: {"raw_score": 0.0-1.0, "normalized": 0.0-1.0, "evaluation": "", "recommendations": ["", ""]}.
+  expected: "factual, organized, cites reasoning"

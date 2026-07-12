@@ -63,6 +63,12 @@ class BenchEngine:
             raise ValueError(f"Unknown benchmark: {benchmark_name}")
 
         prompt = self._load_prompt(benchmark_name)
+        prompt_meta = {
+            "system": prompt.get("system", ""),
+            "user": prompt.get("user", ""),
+            "expected": prompt.get("expected"),
+            "metadata": prompt.get("metadata"),
+        }
         if prompt.get("system"):
             messages = [{"role": "system", "content": prompt["system"]}] + messages
         if prompt.get("user"):
@@ -84,7 +90,7 @@ class BenchEngine:
             return result
 
         benchmark = benchmark_cls()
-        result = benchmark.run(response, **kwargs)
+        result = benchmark.run(response, prompt=prompt_meta, **kwargs)
         result.metadata.setdefault("status", "success")
 
         weight = self.config.weight(benchmark_name)

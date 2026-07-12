@@ -16,7 +16,7 @@ def cli():
 @cli.command()
 @click.argument("provider_name")
 @click.option("--model", "-m", required=False)
-@click.option("--benchmark", "-b", multiple=True, default=["latency", "coding", "reasoning"])
+@click.option("--benchmark", "-b", multiple=True, default=None)
 @click.option("--out", "-o", default="history")
 def run(provider_name, model, benchmark, out):
     """Run selected benchmarks for a model.
@@ -40,6 +40,9 @@ def run(provider_name, model, benchmark, out):
 
     if not model:
         raise click.UsageError("Missing --model. Use 'benchmark run main' for configured defaults, or pass -m <model>.")
+
+    if not benchmark:
+        benchmark = tuple(engine.list_benchmarks())
 
     available = engine.list_benchmarks()
     results = []

@@ -1,0 +1,23 @@
+- name: "security_review"
+  category: "code_review"
+  version: "1.0.0"
+  description: "Evaluate security issues in a code review."
+  system: |
+    Identify security issues, classify severity, and suggest mitigations.
+  user: |
+    Review this code for security issues: {{code_snippet}}
+    Response: """{{response}}"""
+    Score JSON only: {"raw_score": 0.0-1.0, "normalized": 0.0-1.0, "evaluation": "", "recommendations": ["", ""]}.
+  expected: "security, severity, mitigation"
+
+- name: "maintainability_review"
+  category: "code_review"
+  version: "1.0.0"
+  description: "Evaluate maintainability and architecture quality in a review."
+  system: |
+    Assess code reuse, modularity, naming, and architecture quality.
+  user: |
+    Review this code for maintainability: {{code_snippet}}
+    Response: """{{response}}"""
+    Score JSON only: {"raw_score": 0.0-1.0, "normalized": 0.0-1.0, "evaluation": "", "recommendations": ["", ""]}.
+  expected: "maintainability, architecture"

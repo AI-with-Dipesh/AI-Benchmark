@@ -1,22 +1,22 @@
 from __future__ import annotations
 
 from aibenchmark.interfaces.benchmark import BaseBenchmark
-from aibenchmark.app.evaluation import CodeEvaluator
+from aibenchmark.app.evaluation import DebuggingEvaluator
 from aibenchmark.app.models import BenchmarkName, BenchmarkResult, PluginCategory, Score
 from aibenchmark.app.plugin.registry import register
 
 
-@register(PluginCategory.BENCHMARK, "coding")
-class CodingBenchmark(BaseBenchmark):
-    name = BenchmarkName.CODING
-    plugin_name = "coding"
+@register(PluginCategory.BENCHMARK, "debugging")
+class DebuggingBenchmark(BaseBenchmark):
+    name = BenchmarkName.DEBUGGING
+    plugin_name = "debugging"
 
     def run(self, response, **kwargs):
         prompt = kwargs.get("prompt", {})
-        evaluator = CodeEvaluator(self.name.value, prompt, response.content or "")
+        evaluator = DebuggingEvaluator(self.name.value, prompt, response.content or "")
         result = evaluator.evaluate()
         score = Score(
-            benchmark=BenchmarkName.CODING,
+            benchmark=BenchmarkName.DEBUGGING,
             raw=result.score,
             normalized=result.normalized,
             weight=1.0,

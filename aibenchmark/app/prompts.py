@@ -59,7 +59,14 @@ class PromptLoader:
             with path.open("r", encoding="utf-8") as f:
                 data = yaml.safe_load(f) or {}
             if isinstance(data, list):
-                data = data[0] if data else {}
+                for entry in data:
+                    if not isinstance(entry, dict):
+                        continue
+                    if entry.get("category", path.stem) == benchmark_name:
+                        data = entry
+                        break
+                else:
+                    data = data[0] if data else {}
             return PromptSet(
                 name=data.get("name", path.stem),
                 system=data.get("system", ""),

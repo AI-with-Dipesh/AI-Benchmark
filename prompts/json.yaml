@@ -1,0 +1,23 @@
+- name: "valid_json_object"
+  category: "json"
+  version: "1.0.0"
+  description: "Validate JSON response structure and formatting."
+  system: "Generate valid JSON output only."
+  user: |
+    Return JSON for this request: {{request}}
+    Required keys: {{keys}}
+    Response: """{{response}}"""
+    Score JSON only: {"raw_score": 0.0-1.0, "normalized": 0.0-1.0, "evaluation": "", "recommendations": ["", ""]}.
+  expected: "valid JSON, correct keys, formatted"
+
+- name: "schema_compliance"
+  category: "json"
+  version: "1.0.0"
+  description: "Evaluate schema compliance and completeness."
+  system: |
+    Evaluate whether returned JSON matches expected schema and completeness.
+  user: |
+    Schema: {{schema}}
+    Response: """{{response}}"""
+    Score JSON only: {"raw_score": 0.0-1.0, "normalized": 0.0-1.0, "evaluation": "", "recommendations": ["", ""]}.
+  expected: "schema compliant, complete fields"

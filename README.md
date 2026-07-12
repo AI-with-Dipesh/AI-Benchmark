@@ -4,182 +4,177 @@ Production-grade LLM benchmarking for AI engineering tasks.
 
 ## Features
 
-- Plugin-based benchmark engine with provider, benchmark, evaluator, reporter, and strategy plugins.
+Sprint 2: Multi-category evaluation engine with automatic scoring and reporting.
+
+- Plugin-based benchmark engine with provider, benchmark, evaluator, reporter plugins.
 - Built-in providers: Ollama, NVIDIA, OpenRouter, Hugging Face, Gemini.
-- Built-in benchmarks: latency, coding.
-- Built-in reporters: JSON, CSV, Markdown.
-- Dynamic prompt loading from YAML (`prompts/*.yaml`).
-- Configuration via `configs/providers.yaml` and `configs/benchmark.yaml`.
-- Environment-based API key resolution with `python-dotenv`.
+- Built-in benchmarks:
+  - General Intelligence
+  - Coding
+  - Debugging
+  - Code Review
+  - Research
+  - Reasoning
+  - JSON
+  - Instruction Following
+  - Latency
+- Evaluation engine with objective scoring and normalization.
+- Configurable weights per benchmark category.
+- Reports in JSON, CSV, and Markdown with category scores, weighted scores, and evaluation summaries.
+- Prompt versioning via YAML prompt files.
+- Extensible via `pyproject.toml` entry points.
+- CLI: `benchmark run main` executes all configured benchmarks automatically.
 
 ## Architecture
 
-Config → Engine → Providers → Benchmarks → Reporters
-
-- `aibenchmark/app/config.py` — loads and validates configuration.
-- `aibenchmark/app/engine.py` — core pipeline: provider init, prompt loading, execution, scoring, report generation.
-- `aibenchmark/interfaces/` — abstract base classes for providers, benchmarks, reporters, evaluators, strategies.
-- `aibenchmark/plugins/` — built-in provider, benchmark, and reporter implementations.
-- `aibenchmark/cli.py` — Click-based CLI entrypoint.
-
-## Requirements
-
-- Python 3.13+
-- Dependencies: httpx, pydantic, pyyaml, rich, click, jinja2, tenacity, python-dotenv
+```
+aibenchmark/
+  app/
+    engine.py        - BenchEngine: provider init, prompt loading, benchmark orchestration
+    config.py        - AppConfig: providers, weights, defaults
+    prompts.py       - PromptLoader: YAML prompt discovery + metadata
+    evaluation/      - Reusable evaluators per category
+    plugin/
+      registry.py    - Decorator registration
+      manager.py     - PluginManager: discovery, registration, lookup
+  plugins/
+    benchmarks/      - Benchmark plugins (one category per module)
+    providers/       - Provider plugins
+    reporters/       - JSON, Markdown, CSV reporters
+    evaluators/      - Optional external evaluator plugins
+    strategies/      - Optional execution strategies
+  tests/             - pytest suite
+  prompts/           - YAML prompt files per benchmark
+  configs/           - benchmark.yaml, providers.yaml
+```
 
 ## Installation
 
 ```bash
-git clone https://github.com/AI-with-Dipesh/AI-Benchmark.git
-cd AI-Benchmark
 python -m venv .venv
 source .venv/bin/activate
 pip install -e .
 ```
 
-## Configuration
+## Requirements
 
-Copy `.env.example` to `.env` and set provider API keys:
-
-```bash
-cp .env.example .env
-```
-
-Edit `.env`:
-
-```bash
-OLLAMA_API_KEY=
-OPENROUTER_API_KEY=
-NVIDIA_API_KEY=
-HF_API_KEY=
-GEMINI_API_KEY=
-```
-
-`configs/providers.yaml` defines provider endpoints, API key environment variables, and defaults.
-
-`configs/benchmark.yaml` defines score weights and prompt mappings.
+- Python 3.13+
+- Dependencies: httpx, pydantic, pyyaml, rich, click, jinja2, tenacity, python-dotenv
+- Dev: pytest, mypy, ruff
 
 ## Usage
 
+Configure environment variables from `.env.example`:
+
 ```bash
-benchmark --help
-benchmark run --help
+cp .env.example .env
+# fill provider API keys, e.g. OLLAMA_API_KEY, NVIDIA_API_KEY
 ```
 
-Run the configured default provider and model:
+Run all benchmarks for the configured default provider and model:
 
 ```bash
 benchmark run main
 ```
 
-Run a specific provider and model:
+Run specific benchmarks:
 
 ```bash
-benchmark run ollama -m llama3.2
+benchmark run ollama -m llama3 --benchmark coding --benchmark reasoning
 ```
 
-Run selected benchmarks and write reports:
+## CLI Commands
 
-```bash
-benchmark run main --benchmark latency --benchmark coding -o reports
-```
+- `benchmark run <provider> -m <model>` Run selected or all benchmarks.
+- `benchmark run main` Run all benchmarks from `configs/benchmark.yaml` defaults.
 
-List models for a provider:
+## Configuration
 
-```bash
-benchmark provider list ollama
-```
+`configs/benchmark.yaml`
 
-## Example Benchmark
+- `weights:` category weights for final score computation.
+- `default_prompts:` prompt file mapping.
 
-```bash
-benchmark run main --benchmark latency --out reports
-```
+`configs/providers.yaml`
 
-This writes:
+- Provider-specific settings: name, api_key, api_key_env, base_url, models, default.
 
-- `reports/results.json`
-- `reports/results.csv`
-- `reports/results.md`
+## Example Benchmark Output
 
-## Example Reports
-
-`results.json`
 ```json
 [
   {
-    "model": "llama3.2",
+    "model": "llama3",
     "provider": "ollama",
-    "overall": 0.98,
-    "details": { "latency_ms": 120.0, "normalized": 0.976 }
+    "overall": 0.82,
+    "scores": [
+      {
+        "benchmark": "coding",
+        "raw": 0.9,
+        "normalized": 0.9,
+        "weight": 25,
+        "weighted": 22.5
+      }
+    ],
+    "evaluation": "...",
+    "recommendations": ["..."],
+    "metadata": {},
+    "details": {}
   }
 ]
-```
-
-`results.csv`
-```csv
-model,provider,overall
-llama3.2,ollama,0.98
-```
-
-`results.md`
-```markdown
-# Benchmark Results
-
-| Model | Provider | Overall |
-|-------|----------|---------|
-| llama3.2 | ollama | 0.98 |
 ```
 
 ## Project Structure
 
 ```
-AI-Benchmark/
-  aibenchmark/
-    app/
-      config.py
-      engine.py
-      logging.py
-      models.py
-      plugin/
-        manager.py
-        registry.py
-      prompts.py
-    cli.py
-    interfaces/
-      benchmark.py
-      evaluator.py
-      provider.py
-      reporter.py
-      strategy.py
-    plugins/
-      benchmarks/
-        coding.py
-        latency.py
-      providers/
-        huggingface.py
-        nvidia.py
-        ollama.py
-        openrouter.py
-      reporters/
-        generator.py
-    tests/
-  configs/
-    benchmark.yaml
-    providers.yaml
-  prompts/
-    coding.yaml
-    latency.yaml
-    reasoning.yaml
-  pyproject.toml
-  .env.example
+.
+├── aibenchmark/
+│   ├── app/
+│   │   ├── engine.py
+│   │   ├── config.py
+│   │   ├── models.py
+│   │   ├── prompts.py
+│   │   ├── logging/
+│   │   ├── evaluation/
+│   │   └── plugin/
+│   ├── plugins/
+│   │   ├── benchmarks/
+│   │   ├── providers/
+│   │   ├── reporters/
+│   │   ├── evaluators/
+│   │   └── strategies/
+│   ├── cli.py
+│   └── tests/
+├── configs/
+│   ├── benchmark.yaml
+│   └── providers.yaml
+├── prompts/
+│   ├── coding.yaml
+│   ├── debugging.yaml
+│   ├── general.yaml
+│   ├── json.yaml
+│   ├── instruction.yaml
+│   ├── latency.yaml
+│   ├── reasoning.yaml
+│   ├── research.yaml
+│   └── code_review.yaml
+├── pyproject.toml
+├── README.md
+├── LICENSE
+└── CHANGELOG.md
 ```
 
 ## Roadmap
 
-- Sprint 1: core pipeline, providers, benchmarks, reporters, CLI.
-- Sprint 2: timeout/retry policies, prompt versioning, additional benchmarks, terminal dashboard.
+- Sprint 1: Core engine + latency benchmark
+- Sprint 2: Multi-category benchmarks + evaluation engine + weighted scoring + rich reports
+- Sprint 3: History, trend analysis, leaderboard
+- Sprint 4: Dashboard, async execution, scheduling, LiteLLM automation
 
 ## License
 
 MIT
+
+## Contributing
+
+PRs welcome. Run `pytest` and `ruff`/`mypy` before submitting.

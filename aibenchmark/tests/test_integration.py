@@ -39,3 +39,32 @@ def test_end_to_end_mocked(monkeypatch, tmp_path: Path):
 
     produced = engine.generate_reports([result], tmp_path)
     assert (tmp_path / "results.json").exists()
+
+
+def test_end_to_end_all_categories_mocked(monkeypatch, tmp_path: Path) -> None:
+    monkeypatch.setenv("OLLAMA_API_KEY", "fake")
+    engine = BenchEngine()
+    engine.plugins.register(PluginCategory.PROVIDER, "ollama", FakeProvider)
+
+    categories = [
+        BenchmarkName.LATENCY,
+        BenchmarkName.CODING,
+        BenchmarkName.DEBUGGING,
+        BenchmarkName.REASONING,
+        BenchmarkName.RESEARCH,
+        BenchmarkName.JSON,
+        BenchmarkName.CODE_REVIEW,
+        BenchmarkName.GENERAL,
+        BenchmarkName.INSTRUCTION,
+    ]
+    results = []
+    for name in categories:
+        result = engine.run_benchmark("ollama", "all-in-one", name, [{"role": "user", "content": "hi"}])
+        results.append(result)
+        assert result.overall >= 0.0
+        assert result.metadata.get("timestamp")
+        assert len(result.scores) >= 1
+    produced = engine.generate_reports(results, tmp_path)
+    assert (tmp_path / "results.json").exists()
+    assert (tmp_path / "results.md").exists()
+    assert (tmp_path / "results.csv").exists()

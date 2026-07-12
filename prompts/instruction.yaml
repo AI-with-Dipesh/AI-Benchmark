@@ -1,0 +1,23 @@
+- name: "formatting_constraints"
+  category: "instruction"
+  version: "1.0.0"
+  description: "Evaluate exact instruction compliance including formatting and constraints."
+  system: |
+    Evaluate whether the response follows the instruction exactly and cleanly.
+  user: |
+    Instruction: {{instruction}}
+    Response: """{{response}}"""
+    Score JSON only: {"raw_score": 0.0-1.0, "normalized": 0.0-1.0, "evaluation": "", "recommendations": ["", ""]}.
+  expected: "exact instruction, formatting, constraints"
+
+- name: "structured_instructions"
+  category: "instruction"
+  version: "1.0.0"
+  description: "Evaluate multi-part instruction adherence and structure."
+  system: |
+    Score completeness and structure adherence.
+  user: |
+    Instructions: {{instructions}}
+    Response: """{{response}}"""
+    Score JSON only: {"raw_score": 0.0-1.0, "normalized": 0.0-1.0, "evaluation": "", "recommendations": ["", ""]}.
+  expected: "all parts, ordered, concise"
