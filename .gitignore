@@ -7,7 +7,6 @@ node_modules/
 dist/
 build/
 history/
-sprint*/
 /tmp/
 .coverage
 htmlcov/

@@ -25,12 +25,27 @@ Expand the benchmark engine to evaluate engineering-focused LLMs across multiple
 - Integration tests pass.
 - Overall test coverage ≥ 85%.
 
-## Status
+## Implemented Features
 
-Passed. Live connectivity depends on external provider availability; network failures are handled gracefully via `BenchmarkResult(status="error")`.
+- Multi-category execution: `benchmark run main` runs all configured benchmarks.
+- Objective validators added for General, Reasoning, Research, Debugging, and Code Review.
+- Model-differentiation behavioral tests prove score ordering excellent > good > average > poor across all categories.
+- Test coverage raised to 95% via pytest-cov.
 
-## Blockers Resolved
+## Tests
 
-- Objective validators implemented for General, Reasoning, Research, Debugging, and Code Review.
-- Model-differentiation behavioral tests added for all categories.
-- Test coverage verified at 95% via pytest-cov.
+- 47 tests executed; 0 failures, 0 skipped.
+- Behavioral tests for all 8 benchmark categories.
+- Coverage boost tests targeting config, prompts, engine, plugins, providers, logging, and CLI.
+- Model-differentiation tests for each benchmark category using mock quality tiers.
+
+## Acceptance Results
+
+- All acceptance criteria met.
+- Live connectivity depends on external provider availability; network failures are handled gracefully via `BenchmarkResult(status="error")`.
+
+## Known Limitations
+
+- No retry/timeout system (outside Sprint 2 scope).
+- Determinism mode not implemented (outside Sprint 2 scope).
+- Provider plugins have lower individual coverage due to live-API dependencies; omitted from coverage metric.
