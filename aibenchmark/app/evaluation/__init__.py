@@ -128,101 +128,212 @@ class CodeEvaluator(BaseEvaluator):
 
 class DebuggingEvaluator(BaseEvaluator):
     category = "debugging"
+    weights = {"objective": 0.6, "heuristic": 0.4}
 
     def evaluate(self) -> EvalResult:
         text = self.response or ""
         expected = (self.prompt.get("expected") or "")
+
         root_cause_terms = ["root cause", "cause", "reason"]
         fix_terms = ["fix", "patch", "solution", "repair"]
+        expected_tokens = [t for t in re.split(r"\W+", expected.lower()) if t]
+        response_tokens = set(re.split(r"\W+", text.lower()))
+
+        exact_root = bool(re.search(r"root\s+cause", text.lower()))
+        exact_fix = bool(re.search(r"\bfix\b", text.lower()))
+        expected_score = sum(1 for t in expected_tokens if t in response_tokens)
+        expected_score = expected_score / len(expected_tokens) if expected_tokens else 0.0
+
+        code_blocks = re.findall(r"```(?:[a-zA-Z]*\n)?([\s\S]*?)```", text)
+        syntax_ok = True
+        for block in code_blocks:
+            ok, _ = _validate_python_syntax(block)
+            if not ok:
+                syntax_ok = False
+
+        objective = min(1.0, exact_root * 0.25 + exact_fix * 0.25 + expected_score * 0.3 + (1.0 if syntax_ok else 0.0) * 0.2)
 
         root_score = 1.0 if any(term in text.lower() for term in root_cause_terms) else 0.0
         fix_score = 1.0 if any(term in text.lower() for term in fix_terms) else 0.0
-        expected_score = _expected_token_coverage(text, expected)
-        score = min(1.0, (root_score * 0.35 + fix_score * 0.35 + expected_score * 0.3))
+        heuristic = min(1.0, root_score * 0.4 + fix_score * 0.4 + expected_score * 0.2)
+
+        score = min(1.0, self.weights["objective"] * objective + self.weights["heuristic"] * heuristic)
+
+        metadata = {
+            "objective": objective,
+            "heuristic": heuristic,
+            "exact_root": exact_root,
+            "exact_fix": exact_fix,
+            "expected_score": expected_score,
+            "syntax_ok": syntax_ok,
+            "root_score": root_score,
+            "fix_score": fix_score,
+        }
 
         return EvalResult(
-            raw={"root_score": root_score, "fix_score": fix_score, "expected_score": expected_score, "score": score},
+            raw={"objective": objective, "heuristic": heuristic, "score": score, **metadata},
             score=score,
             normalized=self._normalize(score),
-            metadata={"root_score": root_score, "fix_score": fix_score, "expected_score": expected_score},
+            metadata=metadata,
         )
 
 
 class ResearchEvaluator(BaseEvaluator):
     category = "research"
+    weights = {"objective": 0.55, "heuristic": 0.45}
 
     def evaluate(self) -> EvalResult:
         text = self.response or ""
         expected = (self.prompt.get("expected") or "")
+        expected_tokens = [t for t in re.split(r"\W+", expected.lower()) if t]
+        response_tokens = set(re.split(r"\W+", text.lower()))
+
+        citation_score = 1.0 if any(marker in text for marker in ["[", "]", "(", ")", "http"]) else 0.0
+        structure_score = 1.0 if any(marker in text for marker in ["##", "###", "- ", "* ", "1."]) else 0.0
+        expected_score = sum(1 for t in expected_tokens if t in response_tokens)
+        expected_score = expected_score / len(expected_tokens) if expected_tokens else 0.0
+        objective = min(1.0, expected_score * 0.45 + citation_score * 0.3 + structure_score * 0.25)
+
         key_point_terms = ["key", "summary", "important", "main"]
-        structure_score = 1.0 if any(term in text.lower() for term in key_point_terms) and len(text.split()) > 20 else 0.0
-        expected_score = _expected_token_coverage(text, expected)
-        score = min(1.0, (0.4 + structure_score * 0.35 + expected_score * 0.25))
+        heuristic_structure = 1.0 if any(term in text.lower() for term in key_point_terms) and len(text.split()) > 20 else 0.0
+        heuristic = min(1.0, heuristic_structure * 0.45 + expected_score * 0.3 + citation_score * 0.25)
+
+        score = min(1.0, self.weights["objective"] * objective + self.weights["heuristic"] * heuristic)
+
+        metadata = {
+            "objective": objective,
+            "heuristic": heuristic,
+            "citation_score": citation_score,
+            "structure_score": structure_score,
+            "expected_score": expected_score,
+        }
 
         return EvalResult(
-            raw={"structure_score": structure_score, "expected_score": expected_score, "score": score},
+            raw={"objective": objective, "heuristic": heuristic, "score": score, **metadata},
             score=score,
             normalized=self._normalize(score),
-            metadata={"structure_score": structure_score, "expected_score": expected_score},
+            metadata=metadata,
         )
 
 
 class ReasoningEvaluator(BaseEvaluator):
     category = "reasoning"
+    weights = {"objective": 0.55, "heuristic": 0.45}
 
     def evaluate(self) -> EvalResult:
         text = self.response or ""
         expected = (self.prompt.get("expected") or "")
-        step_terms = ["step", "first", "second", "then", "because"]
-        steps_score = 1.0 if any(term in text.lower() for term in step_terms) else 0.0
-        expected_score = _expected_token_coverage(text, expected)
-        score = min(1.0, (0.35 + steps_score * 0.45 + expected_score * 0.2))
+        expected_tokens = [t for t in re.split(r"\W+", expected.lower()) if t]
+        response_tokens = set(re.split(r"\W+", text.lower()))
+
+        step_tokens = ["step", "first", "second", "then", "because"]
+        steps_score = 1.0 if any(term in text.lower() for term in step_tokens) else 0.0
+        expected_score = sum(1 for t in expected_tokens if t in response_tokens)
+        expected_score = expected_score / len(expected_tokens) if expected_tokens else 0.0
+        contradiction_penalty = 0.0
+        lowered = text.lower()
+        if "not" in lowered and any(term in lowered for term in ["always", "never", "all", "every"]):
+            contradiction_penalty = 0.1
+        objective_steps = min(1.0, steps_score * 0.45 + expected_score * 0.4 - contradiction_penalty)
+        objective = max(0.0, objective_steps)
+
+        heuristic = min(1.0, steps_score * 0.5 + expected_score * 0.35 + (0.15 if len(text.split()) >= 18 else 0.0))
+
+        score = min(1.0, self.weights["objective"] * objective + self.weights["heuristic"] * heuristic)
+
+        metadata = {
+            "objective": objective,
+            "heuristic": heuristic,
+            "steps_score": steps_score,
+            "expected_score": expected_score,
+            "contradiction_penalty": contradiction_penalty,
+        }
 
         return EvalResult(
-            raw={"steps_score": steps_score, "expected_score": expected_score, "score": score},
+            raw={"objective": objective, "heuristic": heuristic, "score": score, **metadata},
             score=score,
             normalized=self._normalize(score),
-            metadata={"steps_score": steps_score, "expected_score": expected_score},
+            metadata=metadata,
         )
 
 
 class CodeReviewEvaluator(BaseEvaluator):
     category = "code_review"
+    weights = {"objective": 0.55, "heuristic": 0.45}
 
     def evaluate(self) -> EvalResult:
         text = self.response or ""
         expected = (self.prompt.get("expected") or "")
+        expected_tokens = [t for t in re.split(r"\W+", expected.lower()) if t]
+        response_tokens = set(re.split(r"\W+", text.lower()))
+        expected_score = sum(1 for t in expected_tokens if t in response_tokens)
+        expected_score = expected_score / len(expected_tokens) if expected_tokens else 0.0
+
+        issue_types = ["sql", "xss", "injection", "complexity", "memory", "race", "auth", "permission"]
+        covered = sum(1 for term in issue_types if term in text.lower())
+        issue_coverage = covered / len(issue_types)
+
         security_terms = ["security", "vulnerability", "injection", "auth", "permission"]
         perf_terms = ["performance", "complexity", "O(n)", "optim", "cache"]
-
         security_score = 1.0 if any(term in text.lower() for term in security_terms) else 0.0
         perf_score = 1.0 if any(term in text.lower() for term in perf_terms) else 0.0
-        expected_score = _expected_token_coverage(text, expected)
-        score = min(1.0, (security_score * 0.4 + perf_score * 0.3 + expected_score * 0.3))
+
+        objective = min(1.0, expected_score * 0.4 + issue_coverage * 0.35 + security_score * 0.15 + perf_score * 0.1)
+        heuristic = min(1.0, security_score * 0.4 + perf_score * 0.3 + expected_score * 0.3)
+        score = min(1.0, self.weights["objective"] * objective + self.weights["heuristic"] * heuristic)
+
+        metadata = {
+            "objective": objective,
+            "heuristic": heuristic,
+            "security_score": security_score,
+            "perf_score": perf_score,
+            "issue_coverage": issue_coverage,
+            "expected_score": expected_score,
+        }
 
         return EvalResult(
-            raw={"security_score": security_score, "perf_score": perf_score, "expected_score": expected_score, "score": score},
+            raw={"objective": objective, "heuristic": heuristic, "score": score, **metadata},
             score=score,
             normalized=self._normalize(score),
-            metadata={"security_score": security_score, "perf_score": perf_score, "expected_score": expected_score},
+            metadata=metadata,
         )
 
 
 class GeneralEvaluator(BaseEvaluator):
     category = "general"
+    weights = {"objective": 0.6, "heuristic": 0.4}
 
     def evaluate(self) -> EvalResult:
         text = self.response or ""
         expected = (self.prompt.get("expected") or "")
-        clarity = _expected_token_coverage(text, expected)
+
+        required_sections = [section.strip() for section in expected.split(",") if section.strip()]
+        present_sections = [section for section in required_sections if section.lower() in text.lower()]
+        section_score = len(present_sections) / len(required_sections) if required_sections else 0.0
+
+        coverage = _expected_token_coverage(text, expected)
+        objective = min(1.0, section_score * 0.6 + coverage * 0.4)
+
+        clarity = coverage
         conciseness = 1.0 - min(1.0, abs(_word_count(text) - 60) / 120)
-        score = min(1.0, clarity * 0.6 + conciseness * 0.4)
+        heuristic = min(1.0, clarity * 0.6 + conciseness * 0.4)
+
+        score = min(1.0, self.weights["objective"] * objective + self.weights["heuristic"] * heuristic)
+
+        metadata = {
+            "objective": objective,
+            "heuristic": heuristic,
+            "clarity": clarity,
+            "conciseness": conciseness,
+            "section_score": section_score,
+            "coverage": coverage,
+        }
 
         return EvalResult(
-            raw={"clarity": clarity, "conciseness": conciseness, "score": score},
+            raw={"objective": objective, "heuristic": heuristic, "score": score, **metadata},
             score=score,
             normalized=self._normalize(score),
-            metadata={"clarity": clarity, "conciseness": conciseness},
+            metadata=metadata,
         )
 
 

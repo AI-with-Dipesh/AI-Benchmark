@@ -20,6 +20,7 @@ dev = [
     "pytest-asyncio>=0.23",
     "mypy>=1.9",
     "ruff>=0.5",
+    "pytest-cov>=5.0",
 ]
 
 [project.scripts]
@@ -59,3 +60,11 @@ strict = true
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
+addopts = "--cov=aibenchmark --cov-report=term-missing --cov-config=pyproject.toml"
+[tool.coverage.run]
+source = ["aibenchmark"]
+omit = [
+    "aibenchmark/cli.py",
+    "aibenchmark/plugins/providers/*",
+    "aibenchmark/plugin/__init__.py",
+]
