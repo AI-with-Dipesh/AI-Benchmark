@@ -1,0 +1,3 @@
+- name: "ping"
+  system: ""
+  user: "Say only: pong"

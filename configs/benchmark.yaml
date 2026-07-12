@@ -1,0 +1,19 @@
+weights:
+  coding: 25
+  debugging: 20
+  reasoning: 15
+  research: 15
+  latency: 10
+  json: 5
+  context: 5
+  reliability: 5
+
+default_prompts:
+  coding: "prompts/coding.yaml"
+  debugging: "prompts/debugging.yaml"
+  reasoning: "prompts/reasoning.yaml"
+  research: "prompts/research.yaml"
+  json: "prompts/json.yaml"
+  latency: "prompts/latency.yaml"
+  context: "prompts/context.yaml"
+  instruction: "prompts/instruction.yaml"

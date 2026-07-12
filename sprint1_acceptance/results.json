@@ -1,0 +1,11 @@
+[
+  {
+    "model": "does-not-exist",
+    "provider": "ollama",
+    "overall": 0.0,
+    "details": {
+      "error": "[Errno 111] Connection refused",
+      "error_type": "ConnectError"
+    }
+  }
+]

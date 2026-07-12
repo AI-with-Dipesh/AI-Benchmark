@@ -1,0 +1,9 @@
+- name: "hello_world"
+  system: "You are an expert programmer. Write clean, efficient, readable code."
+  user: "Write a Python function that returns the nth Fibonacci number using memoization."
+  expected: "memoization, recursion or iterative, clean code"
+
+- name: "two_sum"
+  system: "You are an expert programmer."
+  user: "Given a list of integers and a target, return indices of two numbers that sum to target. Write the solution in Python."
+  expected: "O(n) time, hash map"

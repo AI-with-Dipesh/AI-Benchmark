@@ -1,0 +1,9 @@
+- name: "syllogism"
+  system: "You are a logic assistant. Answer with reasoning steps and final answer."
+  user: "All A are B. Some B are C. Therefore, some A are C. True or false? Explain."
+  expected: "False, not necessarily; counterexample or explanation"
+
+- name: "planning"
+  system: "You are a project planner."
+  user: "Plan a 3-step pipeline to scrape a website, deduplicate records, and load into Postgres."
+  expected: "ordered steps, tool choices, error handling"

@@ -1,0 +1,61 @@
+[project]
+name = "aibenchmark"
+version = "0.1.0"
+description = "Production-grade LLM benchmarking for AI engineering tasks"
+requires-python = ">=3.13"
+dependencies = [
+    "httpx>=0.27",
+    "pydantic>=2.7",
+    "pyyaml>=6.0",
+    "rich>=13.7",
+    "click>=8.1",
+    "jinja2>=3.1",
+    "tenacity>=8.2",
+    "python-dotenv>=1.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.2",
+    "pytest-asyncio>=0.23",
+    "mypy>=1.9",
+    "ruff>=0.5",
+]
+
+[project.scripts]
+benchmark = "aibenchmark.cli:main"
+
+[project.entry-points."aibenchmark.providers"]
+# Built-in providers are registered via decorator in aibenchmark.plugins
+# External plugins can add new providers here
+
+[project.entry-points."aibenchmark.benchmarks"]
+# Built-in benchmarks are registered via decorator in aibenchmark.plugins
+# External plugins can add new benchmarks here
+
+[project.entry-points."aibenchmark.reporters"]
+# Built-in reporters are registered via decorator in aibenchmark.plugins
+# External plugins can add new reporters here
+
+[project.entry-points."aibenchmark.evaluators"]
+# External plugins can add evaluators here
+
+[project.entry-points."aibenchmark.strategies"]
+# External plugins can add strategies here
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+include = ["aibenchmark*"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py313"
+
+[tool.mypy]
+strict = true
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
