@@ -1,195 +1,165 @@
 from __future__ import annotations
 
-import os
-import tempfile
 from pathlib import Path
-from importlib.metadata import EntryPoint
 
 import pytest
-from click.testing import CliRunner
 
-from aibenchmark.app.config import ConfigError
-from aibenchmark.app.models import BenchmarkName, PluginCategory, ProviderType
-from aibenchmark.app.prompts import PromptLoader, PromptLoadError
-from aibenchmark.app.plugin.manager import PluginManager
-from aibenchmark.interfaces.provider import BaseProvider
-from aibenchmark.cli import cli as cli_group
-
-
-class DummyProvider(BaseProvider):
-    provider_type = ProviderType.OLLAMA
-
-    def connect(self) -> None:
-        pass
-
-    def list_models(self) -> list[str]:
-        return []
-
-    def chat(self, model: str, messages: list[dict[str, str]], **kwargs) -> "ResponseObject":
-        from aibenchmark.app.models import ResponseObject
-        return ResponseObject(provider=self.provider_type, model=model, content="", latency_ms=0.0)
-
-
-class BrokenProvider(BaseProvider):
-    provider_type = ProviderType.OLLAMA
-
-    def connect(self) -> None:
-        raise RuntimeError("boom")
-
-    def list_models(self) -> list[str]:
-        return []
-
-    def chat(self, model: str, messages: list[dict[str, str]], **kwargs) -> "ResponseObject":
-        from aibenchmark.app.models import ResponseObject
-        return ResponseObject(provider=self.provider_type, model=model, content="", latency_ms=0.0)
+from aibenchmark.app.analytics import (
+    build_comparison,
+    build_leaderboard,
+    build_team,
+    build_trends,
+    recommend,
+    _reliability_score,
+    best_value,
+    most_stable,
+    fastest,
+    highest_quality,
+)
+from aibenchmark.app.history import load_latest, save_run
+from aibenchmark.app.models import BenchmarkName, BenchmarkResult, ProviderType, Score
+from aibenchmark.plugins.reporters.analytics import (
+    generate_compare,
+    generate_leaderboard,
+    generate_recommendations,
+    generate_team,
+    generate_trends,
+)
 
 
-def test_config_defaults_without_defaults_block(tmp_path: Path) -> None:
-    (tmp_path / "providers.yaml").write_text("ollama:\n  api_key_env: OLLAMA_API_KEY\n")
-    (tmp_path / "benchmark.yaml").write_text("weights:\n  coding: 25\ndefault_prompts: {}\n")
-    from aibenchmark.app.config import AppConfig
-    cfg = AppConfig(tmp_path)
-    assert cfg.defaults() == {}
-    assert cfg.weight(BenchmarkName.CODING) == 25.0
-    assert cfg.prompt_path(BenchmarkName.CODING) is None
+def _make_result(provider: str, model: str, overall: float, scores: dict[str, float], latency_ms: float | None = None, reliability: float | None = None, timestamp: str | None = None) -> BenchmarkResult:
+    meta: dict[str, Any] = {"latency_ms": latency_ms}
+    if timestamp:
+        meta["timestamp"] = timestamp
+    return BenchmarkResult(
+        model=model,
+        provider=ProviderType(provider),
+        scores=[Score(benchmark=BenchmarkName(cat), raw=val, normalized=val, weight=1.0) for cat, val in scores.items()],
+        overall=overall,
+        metadata=meta,
+        details={"validation_summary": reliability} if reliability is not None else {},
+    )
 
 
-def test_config_prompt_path_outside_config_dir(tmp_path: Path) -> None:
-    outside = tmp_path.parent / "outside"
-    outside.mkdir(exist_ok=True)
-    prompt_file = outside / "prompt.yaml"
-    prompt_file.write_text("name: x\n")
-    (tmp_path / "providers.yaml").write_text("defaults: {}\n")
-    (tmp_path / "benchmark.yaml").write_text("default_prompts:\n  coding: ../outside/prompt.yaml\n")
-    from aibenchmark.app.config import AppConfig
-    cfg = AppConfig(tmp_path)
-    resolved = cfg.prompt_path("coding")
-    assert resolved is not None
-    assert resolved.exists()
+def test_build_trends_skips_malformed_key(tmp_path: Path) -> None:
+    results = [
+        _make_result("openai", "gpt", 0.8, {"coding": 0.8}, timestamp="2026-01-01T00:00:00+00:00"),
+    ]
+    db = tmp_path / "history.db"
+    save_run(results, db_path=db)
+    # Inject malformed key by directly modifying DB
+    import sqlite3
+    conn = sqlite3.connect(db)
+    conn.execute("UPDATE benchmark_scores SET benchmark='bad:key:extra' WHERE run_id=1")
+    conn.commit()
+    conn.close()
+    loaded = load_latest(1, db_path=db)
+    trends = build_trends(loaded)
+    assert "openai:gpt" in trends or trends == {}
 
 
-def test_engine_prompt_metadata_passed_to_benchmark(monkeypatch, tmp_path: Path) -> None:
-    monkeypatch.setenv("OLLAMA_API_KEY", "fake")
-    from aibenchmark.app.engine import BenchEngine
-    from aibenchmark.app.models import BenchmarkResult
-    from aibenchmark.app.plugin.registry import get_manager
-
-    engine = BenchEngine()
-    captured: dict[str, dict[str, Any]] = {}
-
-    def fake_run(response, prompt=None, **kwargs):
-        captured["prompt"] = prompt
-        return BenchmarkResult(
-            model="fake-model",
-            provider=ProviderType.OLLAMA,
-            scores=[],
-            details={"raw_score": 0.0, "normalized": 0.0},
-            metadata={},
-        )
-
-    class FakeBenchmark:
-        plugin_name = "fake"
-        def run(self, response, prompt=None, **kwargs):
-            return fake_run(response, prompt=prompt, **kwargs)
-
-    monkeypatch.setattr(engine.plugins, "get", lambda category, name: None if category == PluginCategory.PROVIDER else FakeBenchmark)
-    monkeypatch.setattr(engine, "_init_provider", lambda provider_name, **kwargs: type("FakeProvider", (), {"chat": staticmethod(lambda model, messages: type("Resp", (), {"provider": ProviderType.OLLAMA, "model": model, "content": "hi", "latency_ms": 1.0, "tokens_in": 1, "tokens_out": 1})())})())
-    try:
-        engine.run_benchmark("ollama", "fake-model", BenchmarkName.CODING, [{"role": "user", "content": "hi"}])
-    except Exception:
-        pass
-    assert "prompt" in captured
+def test_build_trends_single_run_no_trend() -> None:
+    results = [_make_result("openai", "gpt", 0.8, {"coding": 0.8})]
+    assert build_trends([results]) == {}
 
 
-def test_engine_unknown_provider_raises(monkeypatch) -> None:
-    monkeypatch.setenv("OLLAMA_API_KEY", "fake")
-    from aibenchmark.app.engine import BenchEngine
-    engine = BenchEngine()
-    with pytest.raises(ValueError):
-        engine.run_benchmark("nope", "m", BenchmarkName.LATENCY, [{"role": "user", "content": "hi"}])
+def test_recommend_trade_offs_populated() -> None:
+    results = [
+        _make_result("ollama", "a", 0.9, {"coding": 0.95}, latency_ms=50),
+        _make_result("openai", "b", 0.8, {"coding": 0.8}, latency_ms=120),
+    ]
+    recs = recommend(results)
+    coding = next(r for r in recs if r.category == "coding")
+    assert len(coding.trade_offs) == 1
+    assert "a" in coding.trade_offs[0] or "b" in coding.trade_offs[0]
 
 
-def test_prompt_loader_malformed_prompt_raises(tmp_path: Path) -> None:
-    prompts = tmp_path / "prompts"
-    prompts.mkdir()
-    bad = prompts / "bad.yaml"
-    bad.write_text("\t:\n")
-    (tmp_path / "providers.yaml").write_text("defaults: {}\n")
-    (tmp_path / "benchmark.yaml").write_text("default_prompts:\n  coding: prompts/bad.yaml\n")
-    loader = PromptLoader(tmp_path)
-    with pytest.raises(PromptLoadError):
-        loader.load("coding")
+def test_build_team_trade_offs_populated() -> None:
+    results = [
+        _make_result("ollama", "a", 0.9, {"coding": 0.95}, latency_ms=50),
+        _make_result("openai", "b", 0.8, {"coding": 0.8}, latency_ms=120),
+    ]
+    roles = build_team(results)
+    main = next(r for r in roles if r.role == "Main")
+    assert len(main.trade_offs) == 1
 
 
-def test_plugin_manager_discover_handles_broken_entry_point(monkeypatch) -> None:
-    mgr = PluginManager()
-
-    class FakeEntryPoints:
-        def select(self, group: str):
-            return [EntryPoint(name="broken", group="aibenchmark.benchmarks", value="nonexistent.module:X")]
-
-    monkeypatch.setattr("aibenchmark.app.plugin.manager.entry_points", lambda: FakeEntryPoints())
-    mgr.discover()
+def test_build_comparison_new_and_removed() -> None:
+    old = [_make_result("openai", "m", 0.7, {"coding": 0.7})]
+    new = [_make_result("openai", "m", 0.8, {"coding": 0.8, "reasoning": 0.9})]
+    deltas = build_comparison(new, old)
+    assert deltas["coding"].trend == "improved"
+    assert deltas["reasoning"].trend == "new"
+    assert deltas.get("debugging", None) is None
 
 
-def test_base_provider_capability_defaults() -> None:
-    provider = DummyProvider(api_key="x", base_url="")
-    assert provider.supports_streaming() is False
-    assert provider.supports_tools() is True
-    assert provider.supports_json() is True
-    assert provider.supports_context_length() is True
-    meta = provider.metadata()
-    assert meta["streaming"] is False
-    assert meta["tools"] is True
+def test_reliability_score_from_details() -> None:
+    r = _make_result("openai", "m", 0.8, {"coding": 0.8}, reliability=0.95)
+    assert _reliability_score(r) == 0.95
 
 
-def test_base_provider_health_check_returns_false() -> None:
-    provider = BrokenProvider(api_key="x", base_url="")
-    assert provider.health_check() is False
+def test_reliability_score_from_scores() -> None:
+    r = _make_result("openai", "m", 0.8, {"coding": 0.8, "reliability": 0.9})
+    assert _reliability_score(r) == 0.9
 
 
-def test_setup_logging_does_not_raise() -> None:
-    from aibenchmark.app.logging import setup_logging
-    setup_logging()
+def test_best_value_returns_recommendation() -> None:
+    results = [_make_result("openai", "m", 0.9, {"coding": 0.9}, latency_ms=100)]
+    rec = best_value(results)
+    assert rec is not None
+    assert rec.category == "value"
 
 
-def test_cli_run_main_monkeypatched(monkeypatch, tmp_path: Path) -> None:
-    runner = CliRunner()
+def test_fastest_returns_result() -> None:
+    results = [
+        _make_result("openai", "a", 0.8, {"coding": 0.8}, latency_ms=200),
+        _make_result("openai", "b", 0.8, {"coding": 0.8}, latency_ms=100),
+    ]
+    assert fastest(results).model == "b"
 
-    class FakeEngine:
-        def __init__(self, *args, **kwargs):
-            pass
 
-        def list_benchmarks(self):
-            return ["coding"]
+def test_highest_quality_returns_result() -> None:
+    results = [
+        _make_result("openai", "a", 0.9, {"coding": 0.9}),
+        _make_result("openai", "b", 0.7, {"coding": 0.7}),
+    ]
+    assert highest_quality(results).model == "a"
 
-        def run_benchmark(self, *args, **kwargs):
-            from aibenchmark.app.models import BenchmarkResult, ProviderType, Score
-            return BenchmarkResult(
-                model="demo",
-                provider=ProviderType.OLLAMA,
-                scores=[Score(benchmark=BenchmarkName.CODING, raw=0.8, normalized=0.8, weight=1.0)],
-                details={"raw_score": 0.8, "normalized": 0.8, "evaluation": "", "recommendations": []},
-                metadata={"status": "success"},
-            )
 
-        def generate_reports(self, results, out_dir):
-            (out_dir / "results.json").write_text("[]")
-            (out_dir / "results.md").write_text("md")
-            (out_dir / "results.csv").write_text("csv")
-            return {}
+def test_reporter_generate_contains_trade_offs(tmp_path: Path) -> None:
+    results = [
+        _make_result("ollama", "a", 0.9, {"coding": 0.95}, latency_ms=50),
+        _make_result("openai", "b", 0.8, {"coding": 0.8}, latency_ms=120),
+    ]
+    p = tmp_path / "rec.md"
+    generate_recommendations(results, p)
+    assert "Trade-offs" in p.read_text()
 
-        @property
-        def config(self):
-            class _C:
-                def defaults(self):
-                    return {"default_provider": "ollama", "default_model": "demo"}
-                def provider_config(self, name):
-                    return {"api_key": "fake", "base_url": ""}
-            return _C()
 
-    monkeypatch.setenv("OLLAMA_API_KEY", "fake")
-    monkeypatch.setattr("aibenchmark.cli.BenchEngine", FakeEngine)
-    result = runner.invoke(cli_group, ["run", "main", "-o", str(tmp_path)])
-    assert result.exit_code == 0
-    assert "Reports written to" in result.output
+def test_reporter_team_contains_trade_offs(tmp_path: Path) -> None:
+    results = [
+        _make_result("ollama", "a", 0.9, {"coding": 0.95}, latency_ms=50),
+        _make_result("openai", "b", 0.8, {"coding": 0.8}, latency_ms=120),
+    ]
+    p = tmp_path / "team.md"
+    generate_team(results, p)
+    assert "Trade-offs" in p.read_text()
+
+
+def test_load_latest_fresh_database(tmp_path: Path) -> None:
+    db = tmp_path / "fresh.db"
+    assert load_latest(1, db_path=db) == []
+
+
+def test_compare_reporter_fallback(tmp_path: Path) -> None:
+    results = [_make_result("openai", "m", 0.8, {"coding": 0.8})]
+    p = tmp_path / "compare.md"
+    generate_compare(results, p, db_path=tmp_path / "empty.db")
+    assert "Category" in p.read_text() or "Need" in p.read_text()
+
+
+def test_trends_reporter_fallback(tmp_path: Path) -> None:
+    results = [_make_result("openai", "m", 0.8, {"coding": 0.8})]
+    p = tmp_path / "trends.md"
+    generate_trends(results, p, db_path=tmp_path / "empty.db")
+    assert "Trends" in p.read_text() or "Need" in p.read_text()

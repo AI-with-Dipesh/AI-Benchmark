@@ -12,5 +12,6 @@ from aibenchmark.plugins.benchmarks import (  # noqa: F401
     latency,
 )
 from aibenchmark.plugins.reporters import (  # noqa: F401
+    analytics,
     generator,
 )
