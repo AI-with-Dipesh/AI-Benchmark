@@ -137,7 +137,7 @@ def generate(runs: int, out: str) -> None:
     out_path = Path(out)
     out_path.mkdir(parents=True, exist_ok=True)
     engine.generate_reports(results, out_path, formats=["leaderboard"])
-    click.echo(f"Leaderboard written to {out_path / 'results.leaderboard.md'}")
+    click.echo(f"Leaderboard written to {out_path / 'results.leaderboard'}")
 
 
 @cli.command()
@@ -154,7 +154,7 @@ def recommend(runs: int, out: str) -> None:
     out_path = Path(out)
     out_path.mkdir(parents=True, exist_ok=True)
     engine.generate_reports(results, out_path, formats=["recommendations"])
-    click.echo(f"Recommendations written to {out_path / 'results.recommendations.md'}")
+    click.echo(f"Recommendations written to {out_path / 'results.recommendations'}")
 
 
 @cli.command()
@@ -171,7 +171,7 @@ def team(runs: int, out: str) -> None:
     out_path = Path(out)
     out_path.mkdir(parents=True, exist_ok=True)
     engine.generate_reports(results, out_path, formats=["team"])
-    click.echo(f"Team report written to {out_path / 'results.team.md'}")
+    click.echo(f"Team report written to {out_path / 'results.team'}")
 
 
 @cli.command()
@@ -189,7 +189,7 @@ def compare(against_runs: int, out: str) -> None:
     out_path = Path(out)
     out_path.mkdir(parents=True, exist_ok=True)
     engine.generate_reports(results_a, out_path, formats=["compare"])
-    click.echo(f"Comparison written to {out_path / 'results.compare.md'}")
+    click.echo(f"Comparison written to {out_path / 'results.compare'}")
 
 
 @cli.command()
@@ -206,7 +206,7 @@ def trends(runs: int, out: str) -> None:
     out_path = Path(out)
     out_path.mkdir(parents=True, exist_ok=True)
     engine.generate_reports(results, out_path, formats=["trends"])
-    click.echo(f"Trends written to {out_path / 'results.trends.md'}")
+    click.echo(f"Trends written to {out_path / 'results.trends'}")
 
 
 @cli.command()

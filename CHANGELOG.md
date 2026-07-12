@@ -8,7 +8,7 @@
 - Confidence engine with High/Medium/Low labels derived from score variance and reliability signals.
 - Trade-offs section in recommendation and team reports.
 - New CLI commands: `leaderboard generate`, `recommend`, `team`, `compare`, `trends`, `explain`.
-- New report types: leaderboard.md, recommendations.md, team.md, trends.md, compare.md.
+- New report types: leaderboard, recommendations, team, trends, compare.
 - `docs/sprints/sprint-3.md`.
 
 ### Changed

@@ -181,11 +181,11 @@ benchmark explain --runs 1
 - JSON: raw machine-readable results.
 - CSV: category breakdown.
 - Markdown: human-readable summary.
-- Leaderboard.md: historical top models.
-- recommendations.md: per-category recommendations with confidence and trade-offs.
-- team.md: AI engineering team assembly with roles.
-- trends.md: trend analysis across runs.
-- compare.md: run-to-run comparison.
+- leaderboard: historical top models.
+- recommendations: per-category recommendations with confidence and trade-offs.
+- team: AI engineering team assembly with roles.
+- trends: trend analysis across runs.
+- compare: run-to-run comparison.
 
 ## Project Structure
 
