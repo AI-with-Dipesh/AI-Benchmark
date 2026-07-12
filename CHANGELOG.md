@@ -1,5 +1,27 @@
 # Changelog
 
+## [0.3.0] - 2026-07-12
+
+### Added
+- Sprint 3: SQLite history persistence with `save_run`, `load_latest`, `load_run`, and `init_db`.
+- Analytics engine: leaderboard, trend analysis, recommendations, AI engineering team assembly, run comparison.
+- Confidence engine with High/Medium/Low labels derived from score variance and reliability signals.
+- Trade-offs section in recommendation and team reports.
+- New CLI commands: `leaderboard generate`, `recommend`, `team`, `compare`, `trends`, `explain`.
+- New report types: leaderboard.md, recommendations.md, team.md, trends.md, compare.md.
+- `docs/sprints/sprint-3.md`.
+
+### Changed
+- README updated to include Sprint 3 features, commands, and project structure.
+- Version bumped to 0.3.0.
+
+### Fixed
+- `analytics.py` `build_trends()`: fixed `key.split(":", 2)` unpacking crash on `provider:model` keys.
+- `history.py` `load_latest()`: added `init_db()` before table queries to fix fresh-database crashes.
+- `history.py` `load_run()`: fixed `BenchmarkName` enum conversion from DB strings with malformed-data handling.
+- `plugins/reporters/analytics.py`: removed unused `import json`.
+- Reporter history-load fallbacks now use persistent SQLite data correctly.
+
 ## [0.2.0] - 2026-07-12
 
 ### Added
