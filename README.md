@@ -152,6 +152,7 @@ benchmark explain --runs 1
 ```json
 [
   {
+    "benchmark": "llama3",
     "model": "llama3",
     "provider": "ollama",
     "overall": 0.82,
@@ -164,6 +165,8 @@ benchmark explain --runs 1
         "weighted": 22.5
       }
     ],
+    "evaluation": "...",
+    "recommendations": ["..."],
     "metadata": {
       "timestamp": "2026-07-12T00:00:00+00:00",
       "status": "success"
