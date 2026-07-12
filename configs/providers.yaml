@@ -14,10 +14,6 @@ huggingface:
   base_url: "https://api-inference.huggingface.co/v1"
   api_key_env: "HF_API_KEY"
 
-gemini:
-  base_url: "https://generativelanguage.googleapis.com/v1beta/openai"
-  api_key_env: "GEMINI_API_KEY"
-
 defaults:
   default_provider: "ollama"
   default_model: "llama3.2"

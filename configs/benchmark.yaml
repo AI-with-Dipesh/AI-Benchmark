@@ -8,8 +8,6 @@ weights:
   json: 5
   instruction: 5
   latency: 10
-  context: 5
-  reliability: 5
 
 default_prompts:
   coding: "prompts/coding.yaml"
@@ -21,4 +19,3 @@ default_prompts:
   json: "prompts/json.yaml"
   instruction: "prompts/instruction.yaml"
   latency: "prompts/latency.yaml"
-  context: "prompts/context.yaml"

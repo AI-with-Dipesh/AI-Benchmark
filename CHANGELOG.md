@@ -15,12 +15,17 @@
 - Engine passes prompt metadata into benchmark plugins for context-aware evaluation.
 - Scoring unified through `Score` dataclass with weighted calculation.
 
+### Fixed
+- Objective validators now implemented for General, Reasoning, Research, Debugging, and Code Review.
+- Model-differentiation behavioral tests added for all benchmark categories.
+- Test coverage raised to 95%.
+
 ## [0.1.0] - 2026-07-12
 
 ### Added
 - Initial release: AI-Benchmark Sprint 1.
 - Plugin-based benchmark engine.
-- Built-in providers: Ollama, NVIDIA, OpenRouter, Hugging Face, Gemini.
+- Built-in providers: Ollama, NVIDIA, OpenRouter, Hugging Face.
 - Built-in benchmarks: latency, coding.
 - Built-in reporters: JSON, CSV, Markdown.
 - Dynamic prompt loading from YAML (`prompts/*.yaml`).

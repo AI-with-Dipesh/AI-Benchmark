@@ -7,7 +7,7 @@ Production-grade LLM benchmarking for AI engineering tasks.
 Sprint 2: Multi-category evaluation engine with automatic scoring and reporting.
 
 - Plugin-based benchmark engine with provider, benchmark, evaluator, reporter plugins.
-- Built-in providers: Ollama, NVIDIA, OpenRouter, Hugging Face, Gemini.
+- Built-in providers: Ollama, NVIDIA, OpenRouter, Hugging Face.
 - Built-in benchmarks:
   - General Intelligence
   - Coding
@@ -134,7 +134,7 @@ benchmark run ollama -m llama3 --benchmark coding --benchmark reasoning
 │   │   ├── config.py
 │   │   ├── models.py
 │   │   ├── prompts.py
-│   │   ├── logging/
+│   │   ├── logging.py
 │   │   ├── evaluation/
 │   │   └── plugin/
 │   ├── plugins/
@@ -148,6 +148,7 @@ benchmark run ollama -m llama3 --benchmark coding --benchmark reasoning
 ├── configs/
 │   ├── benchmark.yaml
 │   └── providers.yaml
+├── .env.example
 ├── prompts/
 │   ├── coding.yaml
 │   ├── debugging.yaml
@@ -158,6 +159,8 @@ benchmark run ollama -m llama3 --benchmark coding --benchmark reasoning
 │   ├── reasoning.yaml
 │   ├── research.yaml
 │   └── code_review.yaml
+├── docs/
+│   └── sprint-1.md
 ├── pyproject.toml
 ├── README.md
 ├── LICENSE
