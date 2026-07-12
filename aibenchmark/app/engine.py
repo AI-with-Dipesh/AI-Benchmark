@@ -8,7 +8,6 @@ from typing import Any
 
 from aibenchmark.app.config import AppConfig, ConfigError
 from aibenchmark.app.models import BenchmarkName, BenchmarkResult, PluginCategory, ProviderType, ResponseObject, Score
-from aibenchmark.app.plugin.manager import PluginManager
 from aibenchmark.app.plugin.registry import get_manager
 
 logger = logging.getLogger(__name__)

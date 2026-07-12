@@ -4,7 +4,6 @@ from pathlib import Path
 from aibenchmark.app.engine import BenchEngine
 from aibenchmark.app.logging import setup_logging
 from aibenchmark.app.models import BenchmarkName, PluginCategory
-from aibenchmark.app.plugin.registry import get_manager
 
 setup_logging()
 

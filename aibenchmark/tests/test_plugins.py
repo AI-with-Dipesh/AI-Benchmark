@@ -4,7 +4,6 @@ import pytest
 
 from aibenchmark.app.models import PluginCategory
 from aibenchmark.app.plugin.registry import get_manager
-from aibenchmark.app.plugin.manager import PluginManager
 
 
 def test_manager_lists_builtin_plugins():
