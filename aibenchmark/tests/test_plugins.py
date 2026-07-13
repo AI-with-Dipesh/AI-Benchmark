@@ -19,3 +19,11 @@ def test_engine_happy_path():
     engine = BenchEngine()
     assert engine.list_providers()
     assert engine.list_benchmarks()
+
+
+def test_manager_register_invalid_category():
+    from aibenchmark.app.plugin.manager import PluginManager
+    mgr = PluginManager()
+    # PluginCategory("invalid") raises ValueError at enum creation.
+    with pytest.raises(ValueError):
+        mgr.register(PluginCategory("invalid"), "x", int)

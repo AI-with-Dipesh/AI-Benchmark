@@ -83,4 +83,4 @@ Add historical tracking, analytics, and recommendation capabilities to the bench
 
 ## Next Sprint Goals
 
-- Sprint 4: Dashboard, async execution, scheduling, LiteLLM automation.
+- Sprint 4: Benchmark validation, calibration, reliability metrics, token/cost accounting, retry/timeout policies, reproducibility metadata, expanded CLI and reporters.

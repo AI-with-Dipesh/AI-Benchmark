@@ -105,10 +105,6 @@ def main() -> None:
     cli()
 
 
-if __name__ == "__main__":
-    main()
-
-
 # ============================================================
 # Sprint 3 Analytics Commands
 # ============================================================
@@ -243,6 +239,188 @@ def explain(runs: int) -> None:
         click.echo(f"Best value: {mv.model} ({mv.provider})")
 
 
+# ============================================================
+# Sprint 4: Validation / Calibration / Stats / Reliability /
+#           Reproduce / Cost / Metadata Commands
+# ============================================================
+
+
+@cli.command()
+@click.option("--out", "-o", default="history", show_default=True)
+def validate(out: str) -> None:
+    """Validate benchmark results and scoring integrity."""
+    from aibenchmark.app.engine import BenchEngine
+    from aibenchmark.app.history import load_latest
+    from aibenchmark.app.auto_validation import auto_validate
+    from aibenchmark.app.plugin.registry import get_manager
+
+    manager = get_manager()
+    latest = load_latest(1)
+    if not latest:
+        click.echo("No history available.")
+        return
+    results = latest[0]
+    runs: list[list[BenchmarkResult]] | None = None
+    if len(load_latest(2)) >= 2:
+        runs = load_latest(2)
+    report = auto_validate(results, runs=runs or [])
+    click.echo(report.summary())
+    out_path = Path(out)
+    out_path.mkdir(parents=True, exist_ok=True)
+    engine = BenchEngine()
+    engine.generate_reports(results, out_path, formats=["validation"])
+    click.echo(f"Validation report written to {out_path / 'results.validation'}")
+
+
+@cli.command()
+@click.option("--out", "-o", default="history", show_default=True)
+def calibrate(out: str) -> None:
+    """Run benchmark calibration and generate report."""
+    from aibenchmark.app.engine import BenchEngine
+    from aibenchmark.app.history import load_latest
+    from aibenchmark.app.plugin.registry import get_manager
+
+    manager = get_manager()
+    runs = load_latest(5)
+    if not runs:
+        click.echo("No history available.")
+        return
+    results = runs[0]
+    out_path = Path(out)
+    out_path.mkdir(parents=True, exist_ok=True)
+    engine = BenchEngine()
+    engine.generate_reports(results, out_path, formats=["calibration"], runs=runs)
+    click.echo(f"Calibration report written to {out_path / 'results.calibration'}")
+
+
+@cli.command()
+@click.option("--runs", default=1, show_default=True)
+@click.option("--out", "-o", default="history", show_default=True)
+def stats(runs: int, out: str) -> None:
+    """Generate statistical summary for latest runs."""
+    from aibenchmark.app.engine import BenchEngine
+    from aibenchmark.app.history import load_latest
+    from aibenchmark.app.plugin.registry import get_manager
+
+    manager = get_manager()
+    latest = load_latest(runs)
+    if not latest:
+        click.echo("No history available.")
+        return
+    results = latest[0]
+    out_path = Path(out)
+    out_path.mkdir(parents=True, exist_ok=True)
+    engine = BenchEngine()
+    engine.generate_reports(results, out_path, formats=["statistics"], runs=latest)
+    click.echo(f"Statistics report written to {out_path / 'results.statistics'}")
+
+
+@cli.command()
+@click.option("--runs", default=1, show_default=True)
+@click.option("--out", "-o", default="history", show_default=True)
+def reliability(runs: int, out: str) -> None:
+    """Generate reliability metrics report."""
+    from aibenchmark.app.engine import BenchEngine
+    from aibenchmark.app.history import load_latest
+    from aibenchmark.app.plugin.registry import get_manager
+
+    manager = get_manager()
+    latest = load_latest(runs)
+    if not latest:
+        click.echo("No history available.")
+        return
+    results = latest[0]
+    out_path = Path(out)
+    out_path.mkdir(parents=True, exist_ok=True)
+    engine = BenchEngine()
+    engine.generate_reports(results, out_path, formats=["reliability"], runs=latest)
+    click.echo(f"Reliability report written to {out_path / 'results.reliability'}")
+
+
+@cli.command()
+@click.option("--out", "-o", default="history", show_default=True)
+def reproduce(out: str) -> None:
+    """Print reproducibility metadata for latest run."""
+    from aibenchmark.app.engine import BenchEngine
+    from aibenchmark.app.history import load_latest
+    from aibenchmark.app.plugin.registry import get_manager
+
+    manager = get_manager()
+    latest = load_latest(1)
+    if not latest:
+        click.echo("No history available.")
+        return
+    results = latest[0]
+    out_path = Path(out)
+    out_path.mkdir(parents=True, exist_ok=True)
+    engine = BenchEngine()
+    engine.generate_reports(results, out_path, formats=["metadata"])
+    click.echo(f"Reproducibility metadata written to {out_path / 'results.metadata'}")
+
+
+@cli.command()
+@click.option("--out", "-o", default="history", show_default=True)
+def cost(out: str) -> None:
+    """Generate cost estimation report."""
+    from aibenchmark.app.engine import BenchEngine
+    from aibenchmark.app.history import load_latest
+    from aibenchmark.app.plugin.registry import get_manager
+
+    manager = get_manager()
+    latest = load_latest(1)
+    if not latest:
+        click.echo("No history available.")
+        return
+    results = latest[0]
+    out_path = Path(out)
+    out_path.mkdir(parents=True, exist_ok=True)
+    engine = BenchEngine()
+    engine.generate_reports(results, out_path, formats=["cost"], runs=latest)
+    click.echo(f"Cost report written to {out_path / 'results.cost'}")
+
+
+@cli.command()
+@click.option("--out", "-o", default="history", show_default=True)
+def tokens(out: str) -> None:
+    """Generate token usage report."""
+    from aibenchmark.app.engine import BenchEngine
+    from aibenchmark.app.history import load_latest
+    from aibenchmark.app.plugin.registry import get_manager
+
+    manager = get_manager()
+    latest = load_latest(1)
+    if not latest:
+        click.echo("No history available.")
+        return
+    results = latest[0]
+    out_path = Path(out)
+    out_path.mkdir(parents=True, exist_ok=True)
+    engine = BenchEngine()
+    engine.generate_reports(results, out_path, formats=["tokens"], runs=latest)
+    click.echo(f"Token usage report written to {out_path / 'results.tokens'}")
+
+
+@cli.command()
+@click.option("--out", "-o", default="history", show_default=True)
+def governance(out: str) -> None:
+    """Generate governance/recommendation explainability report."""
+    from aibenchmark.app.engine import BenchEngine
+    from aibenchmark.app.history import load_latest
+    from aibenchmark.app.plugin.registry import get_manager
+
+    manager = get_manager()
+    latest = load_latest(1)
+    if not latest:
+        click.echo("No history available.")
+        return
+    results = latest[0]
+    out_path = Path(out)
+    out_path.mkdir(parents=True, exist_ok=True)
+    engine = BenchEngine()
+    engine.generate_reports(results, out_path, formats=["governance"])
+    click.echo(f"Governance report written to {out_path / 'results.governance'}")
+
+
 def _parse_latency(result: Any) -> float | None:
     latency = None
     if hasattr(result, "metadata"):
@@ -255,3 +433,7 @@ def _parse_latency(result: Any) -> float | None:
         return float(latency)
     except (TypeError, ValueError):
         return None
+
+
+if __name__ == "__main__":
+    main()

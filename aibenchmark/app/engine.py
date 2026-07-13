@@ -7,7 +7,16 @@ from pathlib import Path
 from typing import Any
 
 from aibenchmark.app.config import AppConfig, ConfigError
-from aibenchmark.app.models import BenchmarkName, BenchmarkResult, PluginCategory, ProviderType, ResponseObject, Score
+from aibenchmark.app.models import (
+    BenchmarkName,
+    BenchmarkResult,
+    PluginCategory,
+    ProviderType,
+    ResponseObject,
+    Score,
+    RetryPolicy,
+    TimeoutPolicy,
+)
 from aibenchmark.app.plugin.registry import get_manager
 
 logger = logging.getLogger(__name__)
@@ -21,6 +30,8 @@ class BenchEngine:
             self.config = AppConfig(config_dir)
         except ConfigError as exc:
             raise RuntimeError(f"Benchmark configuration failed: {exc}") from exc
+        self.retry_policy = self.config.retry
+        self.timeout_policy = self.config.timeouts
 
     def list_providers(self) -> list[str]:
         return self.plugins.list_names(PluginCategory.PROVIDER)
@@ -48,21 +59,81 @@ class BenchEngine:
         except Exception as exc:
             raise RuntimeError(f"Failed to initialize provider '{provider_name}': {exc}") from exc
 
-    def _load_prompt(self, benchmark_name: BenchmarkName) -> dict[str, Any]:
+    def _load_prompt(self, benchmark_name: BenchmarkName | str) -> dict[str, Any]:
         from aibenchmark.app.prompts import PromptLoader, PromptLoadError
         loader = PromptLoader()
         prompt = loader.load(benchmark_name)
         if prompt is None:
             return {}
-        return {"system": prompt.system, "user": prompt.user}
+        return {"system": prompt.system, "user": prompt.user, "expected": getattr(prompt, "expected", None), "metadata": getattr(prompt, "metadata", None)}
 
-    def run_benchmark(self, provider_name: str, model: str, benchmark_name: BenchmarkName, messages: list[dict], **kwargs) -> BenchmarkResult:
+    def _apply_run_defaults(self, kwargs: dict[str, Any]) -> dict[str, Any]:
+        defaults = self.config.run_defaults
+        if "temperature" not in kwargs and defaults.get("temperature") is not None:
+            kwargs["temperature"] = defaults["temperature"]
+        if "top_p" not in kwargs and defaults.get("top_p") is not None:
+            kwargs["top_p"] = defaults["top_p"]
+        if "seed" not in kwargs and defaults.get("seed") is not None:
+            kwargs["seed"] = defaults["seed"]
+        return kwargs
+
+    def _populate_metadata(self, result: BenchmarkResult, response: ResponseObject | None, benchmark_start: float, benchmark_name: BenchmarkName | None = None) -> None:
+        latency_ms = None
+        if response and response.latency_ms is not None:
+            latency_ms = response.latency_ms
+        elif benchmark_start:
+            latency_ms = (time.perf_counter() - benchmark_start) * 1000
+
+        result.metadata.setdefault("timestamp", datetime.now(timezone.utc).isoformat())
+        if latency_ms is not None:
+            result.metadata.setdefault("latency_ms", latency_ms)
+
+        # reproducibility
+        result.model_version = None  # provider does not expose version in current interface
+        result.prompt_version = self.config.prompt_version(benchmark_name) if benchmark_name else None
+        result.benchmark_version = self.config.benchmark_version
+
+        # run params
+        rd = self.config.run_defaults
+        result.temperature = rd.get("temperature")
+        result.top_p = rd.get("top_p")
+        seed = rd.get("seed")
+        result.seed = int(seed) if seed is not None else None
+
+        # token accounting
+        if response:
+            result.prompt_tokens = response.tokens_in
+            result.completion_tokens = response.tokens_out
+        result.total_tokens = (result.prompt_tokens or 0) + (result.completion_tokens or 0)
+
+        # cost
+        try:
+            pp, cp = self.config.model_cost(result.provider.value, result.model)
+            result.estimated_cost = CostEstimator.estimate(
+                prompt_tokens=result.prompt_tokens or 0,
+                completion_tokens=result.completion_tokens or 0,
+                prompt_price_per_1k=pp,
+                completion_price_per_1k=cp,
+            )
+        except Exception as exc:
+            logger.debug("Cost estimation failed: %s", exc)
+
+        # evaluation, objective validation, confidence
+        if result.scores:
+            score_obj = result.scores[0]
+            result.objective_validation = (result.details.get("objective") if isinstance(result.details, dict) else None)
+            result.evaluation = score_obj.benchmark.value
+            normalized = score_obj.normalized
+            result.confidence = min(1.0, 0.5 + float(normalized) * 0.5)
+
+    def run_benchmark(self, provider_name: str, model: str, benchmark_name: BenchmarkName | str, messages: list[dict], **kwargs) -> BenchmarkResult:
         provider = self._init_provider(provider_name)
-        benchmark_cls = self.plugins.get(PluginCategory.BENCHMARK, benchmark_name.value)
+        benchmark_name_enum = benchmark_name if isinstance(benchmark_name, BenchmarkName) else BenchmarkName(benchmark_name)
+        benchmark_cls = self.plugins.get(PluginCategory.BENCHMARK, benchmark_name_enum.value)
         if benchmark_cls is None:
-            raise ValueError(f"Unknown benchmark: {benchmark_name}")
+            raise ValueError(f"Unknown benchmark: {benchmark_name_enum}")
 
-        prompt = self._load_prompt(benchmark_name)
+        prompt = self._load_prompt(benchmark_name_enum)
         prompt_meta = {
             "system": prompt.get("system", ""),
             "user": prompt.get("user", ""),
@@ -75,10 +146,63 @@ class BenchEngine:
             fallback = messages[-1]["content"] if messages else ""
             messages[-1] = {"role": "user", "content": prompt["user"] or fallback}
 
+        self._apply_run_defaults(kwargs)
+        kwargs.pop("benchmark", None)
+        kwargs.pop("out", None)
+
+        attempt = 0
+        last_exc: Exception | None = None
+        response: ResponseObject | None = None
+        benchmark_start = time.perf_counter()
+        timeout_status: str | None = None
+        request_timeout = self.timeout_policy.request_timeout_seconds
+
+        while True:
+            attempt += 1
+            elapsed = time.perf_counter() - benchmark_start
+            if elapsed > request_timeout:
+                timeout_status = "request"
+                last_exc = TimeoutError(f"Request timeout after {elapsed:.1f}s")
+                break
+
+            try:
+                response = provider.chat(model, messages, **kwargs)
+                break
+            except Exception as exc:
+                last_exc = exc
+                timeout_status = None
+                if isinstance(exc, TimeoutError):
+                    timeout_status = "request"
+                elif isinstance(exc, ConnectionError):
+                    if "connection" not in self.retry_policy.retryable:
+                        break
+                else:
+                    name = type(exc).__name__.lower()
+                    if not any(t in name for t in self.retry_policy.retryable):
+                        break
+
+                if attempt > self.retry_policy.retry_count:
+                    break
+                time.sleep(self.retry_policy.backoff_factor * (2 ** (attempt - 1)))
+
+        if response is None:
+            result = BenchmarkResult(
+                model=model,
+                provider=ProviderType(provider_name),
+                scores=[],
+                details={"error": str(last_exc), "error_type": type(last_exc).__name__ if last_exc else "unknown"},
+                metadata={"timestamp": datetime.now(timezone.utc).isoformat(), "status": "error", "latency_ms": 0.0},
+                retry_count=attempt - 1,
+                timeout_status=timeout_status,
+            )
+            result.calculate_overall()
+            return result
+
         try:
-            response = provider.chat(model, messages)
+            benchmark = benchmark_cls()
+            result = benchmark.run(response, prompt=prompt_meta, **kwargs)
         except Exception as exc:
-            logger.error("Provider '%s' model '%s' request failed: %s", provider_name, model, exc)
+            logger.error("Benchmark '%s' failed for model '%s': %s", benchmark_name_enum.value, model, exc)
             result = BenchmarkResult(
                 model=model,
                 provider=ProviderType(provider_name),
@@ -87,27 +211,30 @@ class BenchEngine:
                 metadata={"timestamp": datetime.now(timezone.utc).isoformat(), "status": "error"},
             )
             result.calculate_overall()
+            self._populate_metadata(result, response, benchmark_start, benchmark_name_enum)
+            result.retry_count = attempt - 1
+            result.timeout_status = timeout_status
             return result
 
-        benchmark = benchmark_cls()
-        result = benchmark.run(response, prompt=prompt_meta, **kwargs)
+        result.model = model
+        result.provider = ProviderType(provider_name)
         result.metadata.setdefault("status", "success")
 
-        weight = self.config.weight(benchmark_name)
+        weight = self.config.weight(benchmark_name_enum)
         score = Score(
-            benchmark=benchmark_name,
+            benchmark=benchmark_name_enum,
             raw=result.details.get("raw_score", 0.0),
             normalized=result.details.get("normalized", 0.0),
             weight=weight,
         )
         result.scores = [score]
-        result.model = model
-        result.provider = ProviderType(provider_name)
-        result.metadata.setdefault("timestamp", datetime.now(timezone.utc).isoformat())
+        self._populate_metadata(result, response, benchmark_start, benchmark_name_enum)
+        result.retry_count = attempt - 1
+        result.timeout_status = timeout_status
         result.calculate_overall()
         return result
 
-    def generate_reports(self, results: list[BenchmarkResult], out_dir: Path, formats: list[str] | None = None) -> dict[str, Path]:
+    def generate_reports(self, results: list[BenchmarkResult], out_dir: Path, formats: list[str] | None = None, *, runs: list[list[BenchmarkResult]] | None = None) -> dict[str, Path]:
         formats = formats or ["json", "md", "csv"]
         out_dir.mkdir(parents=True, exist_ok=True)
         produced: dict[str, Path] = {}
@@ -118,6 +245,15 @@ class BenchEngine:
                 continue
             reporter = reporter_cls()
             path = out_dir / f"results.{fmt}"
-            reporter.generate(results, path)
+            kwargs: dict[str, Any] = {"runs": runs}
+            if fmt == "cost":
+                kwargs["price_lookup"] = lambda provider, model: self.config.model_cost(provider, model)
+            reporter.generate(results, path, **kwargs)
             produced[fmt] = path
         return produced
+
+
+class CostEstimator:
+    @staticmethod
+    def estimate(prompt_tokens: int, completion_tokens: int, prompt_price_per_1k: float, completion_price_per_1k: float) -> float:
+        return (prompt_tokens / 1000.0) * prompt_price_per_1k + (completion_tokens / 1000.0) * completion_price_per_1k

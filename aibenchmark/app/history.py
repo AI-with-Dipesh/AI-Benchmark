@@ -111,9 +111,31 @@ def save_run(results: list[BenchmarkResult], details: dict[str, Any] | None = No
                 ),
             )
     if details:
+        metadata_json = {}
+        for r in results:
+            key = f"{r.provider.value}:{r.model}"
+            entry = {
+                "metadata": r.metadata,
+                "evaluation": r.evaluation,
+                "objective_validation": r.objective_validation,
+                "confidence": r.confidence,
+                "model_version": r.model_version,
+                "benchmark_version": r.benchmark_version,
+                "prompt_version": r.prompt_version,
+                "temperature": r.temperature,
+                "top_p": r.top_p,
+                "seed": r.seed,
+                "prompt_tokens": r.prompt_tokens,
+                "completion_tokens": r.completion_tokens,
+                "total_tokens": r.total_tokens,
+                "estimated_cost": r.estimated_cost,
+                "retry_count": r.retry_count,
+                "timeout_status": r.timeout_status,
+            }
+            metadata_json[key] = entry
         conn.execute(
             "INSERT INTO run_details (run_id, details, metadata) VALUES (?, ?, ?)",
-            (run_id, json.dumps(details, default=_json_default), None),
+            (run_id, json.dumps(details, default=_json_default), json.dumps(metadata_json, default=_json_default)),
         )
     if owned:
         conn.commit()
@@ -167,6 +189,37 @@ def load_run(run_id: int, db_path: Path | None = None, conn: sqlite3.Connection 
         )
     for r in results.values():
         r.calculate_overall()
+        r.metadata.setdefault("timestamp", run["timestamp"])
+    if conn is not None:
+        rows_details = conn.execute(
+            "SELECT metadata FROM run_details WHERE run_id = ?", (run_id,)
+        ).fetchone()
+        if rows_details and rows_details["metadata"]:
+            try:
+                saved = json.loads(rows_details["metadata"])
+                for key, entry in saved.items():
+                    provider, model = key.split(":", 1)
+                    target = next((x for x in results.values() if x.provider.value == provider and x.model == model), None)
+                    if target is not None:
+                        if entry.get("metadata"):
+                            target.metadata.update(entry["metadata"])
+                        target.evaluation = entry.get("evaluation", target.evaluation)
+                        target.objective_validation = entry.get("objective_validation", target.objective_validation)
+                        target.confidence = entry.get("confidence", target.confidence)
+                        target.model_version = entry.get("model_version", target.model_version)
+                        target.benchmark_version = entry.get("benchmark_version", target.benchmark_version)
+                        target.prompt_version = entry.get("prompt_version", target.prompt_version)
+                        target.temperature = entry.get("temperature", target.temperature)
+                        target.top_p = entry.get("top_p", target.top_p)
+                        target.seed = entry.get("seed", target.seed)
+                        target.prompt_tokens = entry.get("prompt_tokens", target.prompt_tokens)
+                        target.completion_tokens = entry.get("completion_tokens", target.completion_tokens)
+                        target.total_tokens = entry.get("total_tokens", target.total_tokens)
+                        target.estimated_cost = entry.get("estimated_cost", target.estimated_cost)
+                        target.retry_count = entry.get("retry_count", target.retry_count)
+                        target.timeout_status = entry.get("timeout_status", target.timeout_status)
+            except Exception:
+                pass
     return list(results.values())
 
 

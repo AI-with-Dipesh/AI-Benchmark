@@ -19,3 +19,58 @@ default_prompts:
   json: "prompts/json.yaml"
   instruction: "prompts/instruction.yaml"
   latency: "prompts/latency.yaml"
+
+# Sprint 4: benchmark execution defaults
+run_defaults:
+  temperature: 0.2
+  top_p: 0.95
+  seed: null
+  iterations: 3
+  confidence_threshold: 0.6
+  recommendation_stability_threshold: 0.05
+
+# Sprint 4: retry policies
+retry:
+  retry_count: 2
+  backoff_factor: 1.5
+  retryable:
+    - "timeout"
+    - "connection"
+    - "rate"
+    - "server_error"
+
+# Sprint 4: timeout policies (seconds)
+timeouts:
+  request: 60
+  benchmark: 240
+  category: 120
+  connect: 10
+
+# Sprint 4: cost pricing per 1k tokens (used when provider does not expose usage)
+cost:
+  ollama:
+    llama3.2: { prompt: 0.0, completion: 0.0 }
+    llama3.1: { prompt: 0.0, completion: 0.0 }
+    codellama: { prompt: 0.0, completion: 0.0 }
+    mixtral: { prompt: 0.0, completion: 0.0 }
+  openrouter:
+    default: { prompt: 0.001, completion: 0.002 }
+  nvidia:
+    default: { prompt: 0.001, completion: 0.002 }
+  huggingface:
+    default: { prompt: 0.0006, completion: 0.0006 }
+
+# Sprint 4: prompt version registry
+prompt_versions:
+  coding: "1.0"
+  debugging: "1.0"
+  reasoning: "1.0"
+  research: "1.0"
+  code_review: "1.0"
+  general: "1.0"
+  json: "1.0"
+  instruction: "1.0"
+  latency: "1.0"
+
+# Sprint 4: benchmark version
+benchmark_version: "0.4.0"

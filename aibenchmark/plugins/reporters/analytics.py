@@ -48,10 +48,21 @@ def generate_recommendations(results: list[BenchmarkResult], path: Path, **kwarg
         lines.append(f"- **Model:** {rec.model}")
         lines.append(f"- **Provider:** {rec.provider}")
         lines.append(f"- **Score:** {rec.score:.2f}")
+        lines.append(f"- **Overall score:** {rec.overall:.2f}")
         lines.append(f"- **Confidence:** {rec.confidence:.2f} ({rec.confidence_label})")
+        lines.append(f"- **Weight contribution:** {rec.category_weight:.1f}")
+        lines.append(f"- **Major contributing categories:**")
+        for cat, val in rec.top_categories:
+            lines.append(f"  - {cat}: {val:.2f}")
         lines.append(f"- **Reason:**")
         for reason in rec.reasons:
             lines.append(f"  - {reason}")
+        if rec.rejection_reasons:
+            lines.append(f"- **Alternatives rejected:**")
+            for model, reasons in rec.rejection_reasons.items():
+                lines.append(f"  - {model}:")
+                for reason in reasons:
+                    lines.append(f"    - {reason}")
         if rec.trade_offs:
             lines.append(f"- **Trade-offs:**")
             for to in rec.trade_offs:

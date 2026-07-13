@@ -1,5 +1,31 @@
 # Changelog
 
+## [0.4.0] - 2026-07-13
+
+### Added
+- Benchmark validation: `validate_results`, `validate_metadata`, `auto_validate`, `validate_recommendations`.
+- Calibration engine: category bias, inflation detection, discriminative power, recommendation instability.
+- Statistics module: `summarize`, `category_stats`, `outlier_runs`, `score_drift`, confidence intervals.
+- Reliability metrics: success/failure/timeout/retry rates, avg/p95/p99 latency, provider availability.
+- Token accounting: prompt/completion/total tokens, tokens/sec, estimated cost breakdown by provider/model.
+- Retry policies: `RetryPolicy`, exponential backoff, retryable exception filtering.
+- Timeout policies: request/benchmark/category/connect timeouts.
+- Reproducibility metadata on every `BenchmarkResult`: provider/model/version/prompt/timestamp/seed/tokens/cost.
+- Sprint 4 reporters: validation, calibration, reliability, statistics, tokens, cost, metadata, governance.
+- CLI commands: `validate`, `calibrate`, `stats`, `reliability`, `reproduce`, `cost`, `tokens`, `governance`.
+
+### Changed
+- `BenchEngine.run_benchmark` now captures retry count, timeout status, latency, tokens, cost, and run metadata.
+- `configs/benchmark.yaml` extended with retry, timeout, cost, and versioning settings.
+- `models.py` extended with Sprint 4 domain dataclasses.
+
+### Fixed
+- `test_end_to_end_mocked` provider interface alignment.
+- Validation consistency: reporters now use `auto_validate`; CLI and reporters share one canonical validation path.
+- Retry semantics corrected: `retry_count` now means number of retries (total attempts = retries + 1).
+- Cost reporting: reporters now read configured token prices from `configs/benchmark.yaml` instead of hardcoding 0.0.
+- Recommendation reporters now include overall score, weight contribution, major contributing categories, and explicit rejection reasons.
+
 ## [0.3.0] - 2026-07-12
 
 ### Added

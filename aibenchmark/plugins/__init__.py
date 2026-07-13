@@ -14,4 +14,5 @@ from aibenchmark.plugins.benchmarks import (  # noqa: F401
 from aibenchmark.plugins.reporters import (  # noqa: F401
     analytics,
     generator,
+    sprint4,
 )

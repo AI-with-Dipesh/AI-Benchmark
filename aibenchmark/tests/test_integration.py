@@ -14,7 +14,7 @@ class FakeProvider:
         self.api_key = api_key
         self.base_url = base_url
 
-    def chat(self, model: str, messages: list[dict]):
+    def chat(self, model: str, messages: list[dict[str, str]], **kwargs):
         from aibenchmark.app.models import ResponseObject
         return ResponseObject(
             provider=self.provider_type,

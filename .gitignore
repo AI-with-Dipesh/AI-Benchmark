@@ -10,3 +10,4 @@ history/
 /tmp/
 .coverage
 htmlcov/
+.env

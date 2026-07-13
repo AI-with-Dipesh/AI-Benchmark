@@ -22,6 +22,10 @@ class Recommendation:
     latency_ms: float | None = None
     reliability: float | None = None
     trade_offs: list[str] = field(default_factory=list)
+    overall: float = 0.0
+    category_weight: float = 1.0
+    rejection_reasons: dict[str, list[str]] = field(default_factory=dict)
+    top_categories: list[tuple[str, float]] = field(default_factory=list)
 
 
 @dataclass(frozen=True)
@@ -154,6 +158,22 @@ def recommend(results: Sequence[BenchmarkResult]) -> list[Recommendation]:
             for score, r, _, _, _ in candidates[1:3]
         ]
         confidence = _build_confidence(best_score, best_result, category, candidates, models_by_provider_model)
+        top_categories = sorted(
+            ((s.benchmark.value, s.normalized) for s in best_result.scores),
+            key=lambda t: t[1],
+            reverse=True,
+        )[:3]
+        weight = next((s.weight for s in best_result.scores if s.benchmark.value == category), 1.0)
+        rej: dict[str, list[str]] = {}
+        for alt_score, alt_result, _, alt_latency, alt_reliability in candidates[1:]:
+            reasons: list[str] = []
+            if alt_score < best_score:
+                reasons.append(f"Lower category score ({alt_score:.2f} vs {best_score:.2f})")
+            if alt_latency is not None and best_latency is not None and alt_latency > best_latency:
+                reasons.append(f"Higher latency ({alt_latency:.0f}ms vs {best_latency:.0f}ms)")
+            if alt_reliability is not None and best_reliability is not None and alt_reliability < best_reliability:
+                reasons.append(f"Lower reliability ({alt_reliability:.2f} vs {best_reliability:.2f})")
+            rej[alt_result.model] = reasons
         recommendations.append(
             Recommendation(
                 category=category,
@@ -166,6 +186,10 @@ def recommend(results: Sequence[BenchmarkResult]) -> list[Recommendation]:
                 latency_ms=best_latency,
                 reliability=best_reliability,
                 trade_offs=trade_offs,
+                overall=round(best_result.overall, 4),
+                category_weight=round(weight, 4),
+                rejection_reasons=rej,
+                top_categories=top_categories,
             )
         )
     return recommendations
