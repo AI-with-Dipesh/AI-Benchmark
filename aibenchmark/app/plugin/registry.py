@@ -1,8 +1,7 @@
 from __future__ import annotations
 
 import logging
-from functools import wraps
-from typing import TypeVar
+from typing import Any, TypeVar
 
 from aibenchmark.app.models import PluginCategory
 from aibenchmark.app.plugin.manager import PluginManager

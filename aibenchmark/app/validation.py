@@ -3,7 +3,7 @@ from __future__ import annotations
 import logging
 from typing import Sequence
 
-from aibenchmark.app.models import BenchmarkResult, Score, ValidationIssue, ValidationReport
+from aibenchmark.app.models import BenchmarkResult, ValidationIssue, ValidationReport
 
 logger = logging.getLogger(__name__)
 

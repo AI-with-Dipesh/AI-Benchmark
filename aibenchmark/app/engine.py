@@ -14,8 +14,6 @@ from aibenchmark.app.models import (
     ProviderType,
     ResponseObject,
     Score,
-    RetryPolicy,
-    TimeoutPolicy,
 )
 from aibenchmark.app.plugin.registry import get_manager
 
@@ -25,13 +23,21 @@ logger = logging.getLogger(__name__)
 class BenchEngine:
     def __init__(self, config_dir: Path | None = None) -> None:
         import aibenchmark.plugins  # noqa: F401 - trigger built-in plugin registration
+        from aibenchmark.app.provider_health import get_health_tracker
+
         self.plugins = get_manager()
+        self._health_tracker = get_health_tracker()
         try:
             self.config = AppConfig(config_dir)
         except ConfigError as exc:
             raise RuntimeError(f"Benchmark configuration failed: {exc}") from exc
         self.retry_policy = self.config.retry
         self.timeout_policy = self.config.timeouts
+
+    def _record_retry_health(self, provider_name: str, retry_count: int, result: BenchmarkResult, success: bool) -> None:
+        if retry_count > 0:
+            latency = result.metadata.get("latency_ms") or 0.0
+            self._health_tracker.record(provider_name, latency, success, is_retry=True)
 
     def list_providers(self) -> list[str]:
         return self.plugins.list_names(PluginCategory.PROVIDER)
@@ -42,7 +48,7 @@ class BenchEngine:
     def list_reporters(self) -> list[str]:
         return self.plugins.list_names(PluginCategory.REPORTER)
 
-    def _init_provider(self, provider_name: str, **kwargs) -> Any:
+    def _init_provider(self, provider_name: str, **kwargs: Any) -> Any:
         cls = self.plugins.get(PluginCategory.PROVIDER, provider_name)
         if cls is None:
             raise ValueError(f"Unknown provider: {provider_name}")
@@ -60,7 +66,7 @@ class BenchEngine:
             raise RuntimeError(f"Failed to initialize provider '{provider_name}': {exc}") from exc
 
     def _load_prompt(self, benchmark_name: BenchmarkName | str) -> dict[str, Any]:
-        from aibenchmark.app.prompts import PromptLoader, PromptLoadError
+        from aibenchmark.app.prompts import PromptLoader
         loader = PromptLoader()
         prompt = loader.load(benchmark_name)
         if prompt is None:
@@ -126,7 +132,7 @@ class BenchEngine:
             normalized = score_obj.normalized
             result.confidence = min(1.0, 0.5 + float(normalized) * 0.5)
 
-    def run_benchmark(self, provider_name: str, model: str, benchmark_name: BenchmarkName | str, messages: list[dict], **kwargs) -> BenchmarkResult:
+    def run_benchmark(self, provider_name: str, model: str, benchmark_name: BenchmarkName | str, messages: list[dict[str, Any]], **kwargs: Any) -> BenchmarkResult:
         provider = self._init_provider(provider_name)
         benchmark_name_enum = benchmark_name if isinstance(benchmark_name, BenchmarkName) else BenchmarkName(benchmark_name)
         benchmark_cls = self.plugins.get(PluginCategory.BENCHMARK, benchmark_name_enum.value)
@@ -196,11 +202,14 @@ class BenchEngine:
                 timeout_status=timeout_status,
             )
             result.calculate_overall()
+            self._record_retry_health(provider_name, attempt - 1, result, False)
             return result
 
         try:
             benchmark = benchmark_cls()
             result = benchmark.run(response, prompt=prompt_meta, **kwargs)
+            if not isinstance(result, BenchmarkResult):
+                raise TypeError("benchmark.run() must return BenchmarkResult")
         except Exception as exc:
             logger.error("Benchmark '%s' failed for model '%s': %s", benchmark_name_enum.value, model, exc)
             result = BenchmarkResult(
@@ -214,6 +223,7 @@ class BenchEngine:
             self._populate_metadata(result, response, benchmark_start, benchmark_name_enum)
             result.retry_count = attempt - 1
             result.timeout_status = timeout_status
+            self._record_retry_health(provider_name, result.retry_count, result, False)
             return result
 
         result.model = model
@@ -231,6 +241,7 @@ class BenchEngine:
         self._populate_metadata(result, response, benchmark_start, benchmark_name_enum)
         result.retry_count = attempt - 1
         result.timeout_status = timeout_status
+        self._record_retry_health(provider_name, result.retry_count, result, True)
         result.calculate_overall()
         return result
 
@@ -251,6 +262,11 @@ class BenchEngine:
             reporter.generate(results, path, **kwargs)
             produced[fmt] = path
         return produced
+
+    def cross_provider_benchmark(self, providers: list[str], models: dict[str, list[str]]) -> dict[str, Any]:
+        from aibenchmark.app.cross_provider import CrossProviderBenchmark
+        bench = CrossProviderBenchmark()
+        return bench.compare_providers(providers, models)
 
 
 class CostEstimator:

@@ -4,8 +4,9 @@ import time
 from typing import Any
 
 from aibenchmark.interfaces.provider import BaseProvider
-from aibenchmark.app.models import ProviderType, ResponseObject, PluginCategory
+from aibenchmark.app.models import ProviderCapabilities, ProviderMetadata, ProviderType, ResponseObject
 from aibenchmark.app.plugin.registry import register
+from aibenchmark.app.models import PluginCategory
 
 
 @register(PluginCategory.PROVIDER, "ollama")
@@ -56,3 +57,45 @@ class OllamaProvider(BaseProvider):
             tokens_out=usage.get("completion_tokens"),
             raw=data,
         )
+
+    def capabilities(self) -> ProviderCapabilities:
+        return ProviderCapabilities(
+            chat=True,
+            streaming=True,
+            function_calling=True,
+            tool_calling=True,
+            long_context=True,
+            context_window=32768,
+            max_output_tokens=4096,
+        )
+
+    def metadata(self) -> ProviderMetadata:
+        caps = self.capabilities()
+        return ProviderMetadata(
+            provider_name=self.plugin_name,
+            provider_version="1.0.0",
+            endpoint="http://localhost:11434/v1",
+            region="local",
+            capabilities=caps,
+            supported_models=self.list_models(),
+            authentication_type="none",
+            context_window=caps.context_window,
+            streaming_support=caps.streaming,
+            function_calling_support=caps.function_calling,
+            vision_support=False,
+            reasoning_support=False,
+            embeddings_support=caps.embeddings,
+            json_mode_support=caps.json_mode,
+        )
+
+    def estimate_tokens(self, text: str) -> int:
+        return max(1, len(text.split()))
+
+    def estimate_cost(self, prompt_tokens: int, completion_tokens: int) -> float:
+        return 0.0
+
+    def validate_configuration(self) -> dict[str, Any]:
+        issues = []
+        if not self.base_url:
+            issues.append("Missing base_url")
+        return {"valid": len(issues) == 0, "issues": issues}

@@ -1,5 +1,28 @@
 # Changelog
 
+## [0.5.0] - 2026-07-13
+
+### Added
+- Universal Provider Interface: 22-method contract across all providers.
+- Provider Plugin Architecture: dynamic loading, unloading, enable/disable, priority, aliases.
+- Provider Registry: automatic discovery, lookup, capability detection, metadata, health, validation, certification.
+- Capability Detection: 13 flags per provider (chat, reasoning, vision, streaming, function calling, JSON mode, structured output, embeddings, image generation, audio, tool calling, long context, context window, max output tokens).
+- Authentication Layer: environment variables, .env, configuration files, credential validation.
+- Health Monitoring: availability, latency, auth status, failure/retry/timeout rates, rate limits, avg/p95/p99 latency, health reports.
+- Provider Metadata: name, endpoint, region, capabilities, supported models, auth type, pricing, token limits, context window, streaming, function calling, vision, reasoning, embeddings, JSON mode.
+- Rate Limit Detection: 429, quota exceeded, maintenance, daily quota, burst limits, provider-specific limits, retry recommendations.
+- Cross Provider Benchmarking: single/multiple providers, multiple models, multiple categories, category comparison.
+- Provider Comparison Reports: rankings, capability matrix, latency, reliability, cost, token efficiency, reasoning, coding, research, overall.
+- Provider Certification: 4-level classification with scoring and validation.
+- CLI commands: `providers`, `provider list`, `provider info`, `provider health`, `provider compare`, `models`, `capabilities`, `auth`, `discover`, `provider validate`, `provider certify`.
+- New reporters: provider_comparison, provider_health, capabilities.
+- `docs/sprints/sprint-5.md`.
+
+### Changed
+- Engine is fully provider-agnostic; no provider-specific logic in benchmark core.
+- Configuration fully externalized via YAML.
+- Version bumped to 0.5.0.
+
 ## [0.4.0] - 2026-07-13
 
 ### Added

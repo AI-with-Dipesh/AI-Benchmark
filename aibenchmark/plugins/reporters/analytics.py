@@ -51,20 +51,20 @@ def generate_recommendations(results: list[BenchmarkResult], path: Path, **kwarg
         lines.append(f"- **Overall score:** {rec.overall:.2f}")
         lines.append(f"- **Confidence:** {rec.confidence:.2f} ({rec.confidence_label})")
         lines.append(f"- **Weight contribution:** {rec.category_weight:.1f}")
-        lines.append(f"- **Major contributing categories:**")
+        lines.append("- **Major contributing categories:**")
         for cat, val in rec.top_categories:
             lines.append(f"  - {cat}: {val:.2f}")
-        lines.append(f"- **Reason:**")
+        lines.append("- **Reason:**")
         for reason in rec.reasons:
             lines.append(f"  - {reason}")
         if rec.rejection_reasons:
-            lines.append(f"- **Alternatives rejected:**")
+            lines.append("- **Alternatives rejected:**")
             for model, reasons in rec.rejection_reasons.items():
                 lines.append(f"  - {model}:")
                 for reason in reasons:
                     lines.append(f"    - {reason}")
         if rec.trade_offs:
-            lines.append(f"- **Trade-offs:**")
+            lines.append("- **Trade-offs:**")
             for to in rec.trade_offs:
                 lines.append(f"  - {to}")
         lines.append("")
@@ -80,11 +80,11 @@ def generate_team(results: list[BenchmarkResult], path: Path, **kwargs: object) 
         lines.append(f"- **Provider:** {role.provider}")
         lines.append(f"- **Score:** {role.score:.2f}")
         lines.append(f"- **Confidence:** {role.confidence:.2f} ({role.confidence_label})")
-        lines.append(f"- **Reason:**")
+        lines.append("- **Reason:**")
         for reason in role.reasons:
             lines.append(f"  - {reason}")
         if role.trade_offs:
-            lines.append(f"- **Trade-offs:**")
+            lines.append("- **Trade-offs:**")
             for to in role.trade_offs:
                 lines.append(f"  - {to}")
         lines.append("")

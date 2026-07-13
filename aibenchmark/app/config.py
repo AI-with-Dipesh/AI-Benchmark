@@ -22,6 +22,7 @@ class AppConfig:
     def __init__(self, config_dir: Path | None = None) -> None:
         self.config_dir = config_dir or Path(__file__).resolve().parent.parent.parent / "configs"
         self.providers: dict[str, Any] = {}
+        self.provider_plugins: dict[str, Any] = {}
         self.weights: dict[str, float] = {}
         self.default_prompts: dict[str, str] = {}
         self.run_defaults: dict[str, Any] = {}
@@ -44,6 +45,7 @@ class AppConfig:
         try:
             with providers_path.open("r", encoding="utf-8") as f:
                 self.providers = yaml.safe_load(f) or {}
+            self.provider_plugins = self.providers.pop("provider_plugins", {}) if isinstance(self.providers, dict) else {}
         except Exception as exc:
             raise ConfigError(f"Invalid providers config {providers_path}: {exc}") from exc
 
@@ -104,6 +106,16 @@ class AppConfig:
         if not isinstance(defaults, dict):
             return {}
         return defaults
+
+    def provider_plugin_config(self, name: str) -> dict[str, Any]:
+        cfg = self.provider_plugins.get(name, {})
+        if not isinstance(cfg, dict):
+            return {}
+        provider_cfg = self.providers.get(name, {})
+        if isinstance(provider_cfg, dict):
+            cfg.setdefault("api_key_env", provider_cfg.get("api_key_env", ""))
+            cfg.setdefault("base_url", provider_cfg.get("base_url", ""))
+        return cfg
 
     def weight(self, benchmark_name: str | BenchmarkName) -> float:
         key = benchmark_name.value if isinstance(benchmark_name, BenchmarkName) else benchmark_name

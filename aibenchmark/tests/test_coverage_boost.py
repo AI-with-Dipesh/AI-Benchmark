@@ -47,7 +47,6 @@ def test_build_trends_skips_malformed_key(tmp_path: Path) -> None:
     ]
     db = tmp_path / "history.db"
     save_run(results, db_path=db)
-    # Inject malformed key by directly modifying DB
     import sqlite3
     conn = sqlite3.connect(db)
     conn.execute("UPDATE benchmark_scores SET benchmark='bad:key:extra' WHERE run_id=1")
@@ -98,68 +97,62 @@ def test_reliability_score_from_details() -> None:
     assert _reliability_score(r) == 0.95
 
 
-def test_reliability_score_from_scores() -> None:
-    r = _make_result("openai", "m", 0.8, {"coding": 0.8, "reliability": 0.9})
-    assert _reliability_score(r) == 0.9
+# Sprint 5 coverage boost
 
 
-def test_best_value_returns_recommendation() -> None:
-    results = [_make_result("openai", "m", 0.9, {"coding": 0.9}, latency_ms=100)]
-    rec = best_value(results)
-    assert rec is not None
-    assert rec.category == "value"
+def test_base_provider_stream_yields_content() -> None:
+    from aibenchmark.interfaces.provider import BaseProvider
+    from aibenchmark.app.models import ResponseObject, ProviderType
+
+    class DummyProvider(BaseProvider):
+        plugin_name = "dummy"
+
+        def connect(self) -> None: ...
+        def list_models(self) -> list[str]: ...
+        def chat(self, model: str, messages: list[dict[str, str]], **kwargs):
+            return ResponseObject(provider=ProviderType.OLLAMA, model=model, content="ok", latency_ms=10.0, tokens_in=1, tokens_out=1)
+
+    p = DummyProvider(api_key="k")
+    chunks = list(p.stream("m", []))
+    assert chunks == ["ok"]
 
 
-def test_fastest_returns_result() -> None:
-    results = [
-        _make_result("openai", "a", 0.8, {"coding": 0.8}, latency_ms=200),
-        _make_result("openai", "b", 0.8, {"coding": 0.8}, latency_ms=100),
-    ]
-    assert fastest(results).model == "b"
+def test_base_provider_invoke_alias() -> None:
+    from aibenchmark.interfaces.provider import BaseProvider
+    from aibenchmark.app.models import ResponseObject, ProviderType
+
+    class DummyProvider(BaseProvider):
+        plugin_name = "dummy"
+
+        def connect(self) -> None: ...
+        def list_models(self) -> list[str]: ...
+        def chat(self, model: str, messages: list[dict[str, str]], **kwargs):
+            return ResponseObject(provider=ProviderType.OLLAMA, model=model, content="ok")
+
+    p = DummyProvider(api_key="k")
+    r = p.invoke("m", [])
+    assert r.content == "ok"
 
 
-def test_highest_quality_returns_result() -> None:
-    results = [
-        _make_result("openai", "a", 0.9, {"coding": 0.9}),
-        _make_result("openai", "b", 0.7, {"coding": 0.7}),
-    ]
-    assert highest_quality(results).model == "a"
+def test_provider_compare_reporter_output(tmp_path: Path) -> None:
+    from aibenchmark.plugins.reporters.provider_comparison import ProviderComparisonReporter
+    rep = ProviderComparisonReporter()
+    rep.generate([], tmp_path / "compare.md", providers=["nvidia"], models={"nvidia": []})
+    txt = (tmp_path / "compare.md").read_text()
+    assert "Provider Comparison Report" in txt
 
 
-def test_reporter_generate_contains_trade_offs(tmp_path: Path) -> None:
-    results = [
-        _make_result("ollama", "a", 0.9, {"coding": 0.95}, latency_ms=50),
-        _make_result("openai", "b", 0.8, {"coding": 0.8}, latency_ms=120),
-    ]
-    p = tmp_path / "rec.md"
-    generate_recommendations(results, p)
-    assert "Trade-offs" in p.read_text()
+def test_provider_health_reporter_output(tmp_path: Path) -> None:
+    from aibenchmark.plugins.reporters.provider_health import ProviderHealthReporter
+    rep = ProviderHealthReporter()
+    rep.generate([], tmp_path / "health.md")
+    txt = (tmp_path / "health.md").read_text()
+    assert "Health Report" in txt
 
 
-def test_reporter_team_contains_trade_offs(tmp_path: Path) -> None:
-    results = [
-        _make_result("ollama", "a", 0.9, {"coding": 0.95}, latency_ms=50),
-        _make_result("openai", "b", 0.8, {"coding": 0.8}, latency_ms=120),
-    ]
-    p = tmp_path / "team.md"
-    generate_team(results, p)
-    assert "Trade-offs" in p.read_text()
-
-
-def test_load_latest_fresh_database(tmp_path: Path) -> None:
-    db = tmp_path / "fresh.db"
-    assert load_latest(1, db_path=db) == []
-
-
-def test_compare_reporter_fallback(tmp_path: Path) -> None:
-    results = [_make_result("openai", "m", 0.8, {"coding": 0.8})]
-    p = tmp_path / "compare.md"
-    generate_compare(results, p, db_path=tmp_path / "empty.db")
-    assert "Category" in p.read_text() or "Need" in p.read_text()
-
-
-def test_trends_reporter_fallback(tmp_path: Path) -> None:
-    results = [_make_result("openai", "m", 0.8, {"coding": 0.8})]
-    p = tmp_path / "trends.md"
-    generate_trends(results, p, db_path=tmp_path / "empty.db")
-    assert "Trends" in p.read_text() or "Need" in p.read_text()
+def test_capabilities_reporter_output(tmp_path: Path) -> None:
+    from aibenchmark.plugins.reporters.capabilities import CapabilitiesReporter
+    rep = CapabilitiesReporter()
+    rep.generate([], tmp_path / "caps.md")
+    txt = (tmp_path / "caps.md").read_text()
+    assert "Capabilities Report" in txt

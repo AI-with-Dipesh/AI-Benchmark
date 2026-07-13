@@ -34,7 +34,7 @@ class PromptLoader:
 
     def _get_config(self):
         if self._config is None:
-            from aibenchmark.app.config import AppConfig, ConfigError
+            from aibenchmark.app.config import AppConfig
             try:
                 self._config = AppConfig(self.config_dir)
             except Exception as exc:

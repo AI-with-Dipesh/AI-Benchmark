@@ -1,10 +1,7 @@
 from __future__ import annotations
 
-import time
-from abc import ABC, abstractmethod
-from dataclasses import dataclass, asdict, field
+from dataclasses import dataclass, field
 from enum import Enum
-from pathlib import Path
 from typing import Any
 
 from pydantic import BaseModel, Field
@@ -126,6 +123,132 @@ class TokenUsage:
     def tokens_per_second(self) -> float | None:
         # latency_seconds must be supplied externally if needed
         return None
+
+
+# Sprint 5: Universal Provider Platform models
+
+
+@dataclass(frozen=True)
+class ProviderCapabilities:
+    chat: bool = True
+    reasoning: bool = False
+    vision: bool = False
+    streaming: bool = False
+    function_calling: bool = False
+    json_mode: bool = False
+    structured_output: bool = False
+    embeddings: bool = False
+    image_generation: bool = False
+    audio: bool = False
+    tool_calling: bool = False
+    long_context: bool = False
+    context_window: int | None = None
+    max_output_tokens: int | None = None
+
+    def has(self, capability: str) -> bool:
+        return getattr(self, capability, False)
+
+    def flags(self) -> list[str]:
+        return [k for k, v in self.__dict__.items() if isinstance(v, bool) and v]
+
+
+@dataclass(frozen=True)
+class ProviderMetadata:
+    provider_name: str
+    provider_version: str | None = None
+    endpoint: str | None = None
+    region: str | None = None
+    capabilities: ProviderCapabilities = field(default_factory=ProviderCapabilities)
+    supported_models: list[str] = field(default_factory=list)
+    authentication_type: str = "api_key"
+    pricing: dict[str, Any] = field(default_factory=dict)
+    token_limits: dict[str, int | None] = field(default_factory=dict)
+    context_window: int | None = None
+    streaming_support: bool = False
+    function_calling_support: bool = False
+    vision_support: bool = False
+    reasoning_support: bool = False
+    embeddings_support: bool = False
+    json_mode_support: bool = False
+
+
+@dataclass(frozen=True)
+class RateLimitStatus:
+    remaining: int | None = None
+    limit: int | None = None
+    reset_seconds: int | None = None
+    retry_after: int | None = None
+    is_rate_limited: bool = False
+    quota_exceeded: bool = False
+    provider_maintenance: bool = False
+    daily_quota_exceeded: bool = False
+    burst_limit_hit: bool = False
+    provider_specific_limits: dict[str, Any] = field(default_factory=dict)
+
+    @property
+    def retry_recommendation(self) -> str:
+        if self.provider_maintenance:
+            return "Provider is under maintenance. Retry later."
+        if self.quota_exceeded or self.daily_quota_exceeded:
+            return "Quota exceeded. Wait until next billing cycle or upgrade plan."
+        if self.burst_limit_hit:
+            return "Burst limit hit. Reduce request rate."
+        if self.is_rate_limited:
+            if self.retry_after:
+                return f"Rate limited. Retry after {self.retry_after} seconds."
+            return "Rate limited. Reduce request frequency."
+        return "No rate limit detected."
+
+
+@dataclass(frozen=True)
+class AuthResult:
+    authenticated: bool
+    provider: str
+    message: str = ""
+    credential_valid: bool = False
+    expires_at: str | None = None
+    scopes: list[str] = field(default_factory=list)
+    validation_errors: list[str] = field(default_factory=list)
+
+
+@dataclass(frozen=True)
+class ProviderPluginConfig:
+    name: str
+    enabled: bool = True
+    priority: int = 100
+    aliases: list[str] = field(default_factory=list)
+    tags: list[str] = field(default_factory=list)
+    api_key_env: str = ""
+    base_url: str = ""
+    timeout_seconds: float = 60.0
+    max_retries: int = 3
+    backoff_factor: float = 1.5
+
+
+class ProviderStatus(str, Enum):
+    AVAILABLE = "available"
+    DEGRADED = "degraded"
+    UNAVAILABLE = "unavailable"
+    UNKNOWN = "unknown"
+
+
+@dataclass(frozen=True)
+class ProviderHealth:
+    provider_name: str
+    status: ProviderStatus = ProviderStatus.UNKNOWN
+    availability: float = 0.0
+    authentication_status: bool = False
+    connection_health: bool = True
+    average_latency_ms: float | None = None
+    median_latency_ms: float | None = None
+    p95_latency_ms: float | None = None
+    p99_latency_ms: float | None = None
+    failure_rate: float = 0.0
+    timeout_rate: float = 0.0
+    retry_rate: float = 0.0
+    total_checks: int = 0
+    last_check: str = ""
+    rate_limit: RateLimitStatus = field(default_factory=RateLimitStatus)
 
 
 @dataclass(frozen=True)

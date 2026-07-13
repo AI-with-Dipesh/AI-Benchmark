@@ -4,8 +4,9 @@ import time
 from typing import Any
 
 from aibenchmark.interfaces.provider import BaseProvider
-from aibenchmark.app.models import ProviderType, ResponseObject, PluginCategory
+from aibenchmark.app.models import ProviderCapabilities, ProviderMetadata, ProviderType, ResponseObject
 from aibenchmark.app.plugin.registry import register
+from aibenchmark.app.models import PluginCategory
 
 
 @register(PluginCategory.PROVIDER, "openrouter")
@@ -17,7 +18,10 @@ class OpenRouterProvider(BaseProvider):
         super().__init__(api_key, base_url, **kwargs)
 
     def connect(self) -> None:
-        pass
+        import httpx
+        with httpx.Client(timeout=10) as client:
+            r = client.get(f"{self.base_url}/models", headers={"Authorization": f"Bearer {self.api_key}"})
+            r.raise_for_status()
 
     def list_models(self) -> list[str]:
         import httpx
@@ -54,3 +58,50 @@ class OpenRouterProvider(BaseProvider):
             tokens_out=usage.get("completion_tokens"),
             raw=data,
         )
+
+    def capabilities(self) -> ProviderCapabilities:
+        return ProviderCapabilities(
+            chat=True,
+            reasoning=False,
+            vision=True,
+            streaming=True,
+            function_calling=True,
+            tool_calling=True,
+            json_mode=True,
+            structured_output=True,
+            context_window=200000,
+            max_output_tokens=8192,
+        )
+
+    def metadata(self) -> ProviderMetadata:
+        caps = self.capabilities()
+        return ProviderMetadata(
+            provider_name=self.plugin_name,
+            provider_version="1.0.0",
+            endpoint="https://openrouter.ai/api/v1",
+            region="us",
+            capabilities=caps,
+            supported_models=self.list_models(),
+            authentication_type="bearer",
+            context_window=caps.context_window,
+            streaming_support=caps.streaming,
+            function_calling_support=caps.function_calling,
+            vision_support=caps.vision,
+            reasoning_support=caps.reasoning,
+            embeddings_support=caps.embeddings,
+            json_mode_support=caps.json_mode,
+        )
+
+    def estimate_tokens(self, text: str) -> int:
+        return max(1, len(text.split()))
+
+    def estimate_cost(self, prompt_tokens: int, completion_tokens: int) -> float:
+        return (prompt_tokens / 1000.0) * 0.001 + (completion_tokens / 1000.0) * 0.002
+
+    def validate_configuration(self) -> dict[str, Any]:
+        issues = []
+        if not self.api_key:
+            issues.append("Missing OPENROUTER_API_KEY")
+        if not self.base_url:
+            issues.append("Missing base_url")
+        return {"valid": len(issues) == 0, "issues": issues}

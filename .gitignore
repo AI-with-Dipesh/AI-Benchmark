@@ -11,3 +11,5 @@ history/
 .coverage
 htmlcov/
 .env
+.mypy_cache/
+.ruff_cache/

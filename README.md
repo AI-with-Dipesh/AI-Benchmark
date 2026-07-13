@@ -28,6 +28,24 @@ Production-grade LLM benchmarking for AI engineering tasks.
   - Trend analysis across runs.
   - AI Engineering Team assembly recommendations.
   - Run comparison reports.
+- Sprint 4 Validation & Reliability:
+  - Benchmark validation and auto-validation.
+  - Calibration engine with discriminative power and bias detection.
+  - Reliability metrics: success/failure/timeout/retry rates, P95/P99 latency.
+  - Token accounting and cost estimation.
+  - Retry/timeout policies.
+  - Reproducibility metadata on every result.
+- Sprint 5 Universal Provider Platform:
+  - Universal Provider Interface (22-method contract).
+  - Dynamic provider plugin system with load/unload/enable/disable/priority/aliases.
+  - Provider Registry with automatic discovery and capability detection.
+  - Health monitoring with rolling-window latency and failure tracking.
+  - Authentication layer supporting env vars, .env, and config files.
+  - Rate limit detection with retry recommendations.
+  - Cross-provider benchmarking and deterministic ranking.
+  - Provider certification (platinum/gold/silver/bronze).
+  - Provider comparison reports (capabilities, latency, reliability, cost, token efficiency).
+  - CLI commands: `providers`, `provider info`, `provider health`, `provider compare`, `models`, `capabilities`, `auth`, `discover`, `provider validate`, `provider certify`.
 - CLI:
   - `benchmark run main` executes all configured benchmarks.
   - `benchmark leaderboard generate` builds historical leaderboards.
@@ -36,6 +54,9 @@ Production-grade LLM benchmarking for AI engineering tasks.
   - `benchmark compare` compares latest run against a previous run.
   - `benchmark trends` shows trend analysis across runs.
   - `benchmark explain` prints human-readable recommendation explanations.
+  - `benchmark providers` lists all registered providers.
+  - `benchmark provider health` shows provider health status.
+  - `benchmark provider compare` compares providers and shows ranking.
 
 ## Architecture
 
@@ -60,17 +81,27 @@ aibenchmark/
       __init__.py           - Evaluator implementations per category
     plugin/
       registry.py           - Decorator registration
-      manager.py            - PluginManager: discovery, registration, lookup
+      manager.py            - PluginManager: discovery, registration, lookup, unload, priority
+    provider_registry.py     - ProviderRegistry: discovery, health, capabilities, metadata, validation
+    provider_health.py       - Health monitoring: rolling-window metrics, status classification
+    provider_capabilities.py - Capability detection: 13 flags per provider
+    auth.py                  - Authentication layer: env, .env, config, credential validation
+    rate_limits.py           - Rate limit detection: 429, quota, maintenance, burst limits
+    certification.py         - Provider certification: platinum/gold/silver/bronze classification
+    cross_provider.py        - Cross-provider benchmarking and deterministic ranking
   plugins/
     benchmarks/             - Benchmark plugins (one category per module)
     providers/              - Provider plugins
-    reporters/              - JSON, Markdown, CSV + Sprint 4 reporters
+    reporters/              - JSON, Markdown, CSV + Sprint 4/5 reporters
       analytics.py          - Sprint 3 analytics reporters
       generator.py          - JSON/Markdown/CSV report generation
       sprint4.py            - Validation, calibration, reliability, stats, cost, metadata
+      provider_comparison.py - Sprint 5 provider comparison reports
+      provider_health.py     - Sprint 5 provider health reports
+      capabilities.py        - Sprint 5 capability reports
     evaluators/             - Optional external evaluator plugins
     strategies/             - Optional execution strategies
-  cli.py                     - Click CLI: run, recommend, team, explain, validate, calibrate...
+  cli.py                     - Click CLI: run, recommend, team, explain, validate, calibrate, providers, health, compare, models, capabilities, auth, discover, certify
   tests/                     - pytest suite
   prompts/                   - YAML prompt files per benchmark
   configs/                   - benchmark.yaml, providers.yaml
@@ -137,7 +168,17 @@ benchmark explain --runs 1
 
 - `benchmark run <provider> -m <model> [-b <benchmark>...]` Run selected or all benchmarks.
 - `benchmark run main` Run all benchmarks from `configs/benchmark.yaml` defaults.
-- `benchmark provider list <provider_name>` List available models.
+- `benchmark providers` List all registered providers.
+- `benchmark provider list` Alias for `benchmark providers`.
+- `benchmark provider info <provider>` Print detailed provider info and metadata.
+- `benchmark provider health` Show provider health status.
+- `benchmark provider compare` Compare providers and show ranking.
+- `benchmark provider validate` Run full provider validation and generate a report.
+- `benchmark provider certify` Generate provider certification report.
+- `benchmark models <provider>` List models for a provider.
+- `benchmark capabilities` Show provider capabilities.
+- `benchmark auth` Validate authentication credentials.
+- `benchmark discover` Discover and list all plugins.
 - `benchmark leaderboard generate` Generate leaderboard report from persisted history.
 - `benchmark recommend` Recommend best model per category based on history.
 - `benchmark team` Build an AI engineering team from latest history.
@@ -217,6 +258,9 @@ benchmark explain --runs 1
 - cost: total cost, by provider, by model.
 - metadata: reproducibility metadata table.
 - governance: recommendation explainability with alternatives and confidence derivation.
+- provider_comparison: cross-provider rankings, capability matrix, cost, token efficiency.
+- provider_health: per-provider health status and metrics.
+- capabilities: provider capability flags and detection method.
 
 ## Project Structure
 
@@ -232,17 +276,24 @@ benchmark explain --runs 1
 │   │   ├── history.py               - SQLite persistence: init_db, save_run, load_latest
 │   │   ├── logging.py               - Logging setup
 │   │   ├── models.py                - Dataclasses + validation/calibration/reliability models
+│   │   ├── plugin/
+│   │   │   ├── registry.py          - Decorator registration
+│   │   │   └── manager.py           - PluginManager: discovery, registration, lookup, unload, priority
 │   │   ├── prompts.py               - PromptLoader: YAML prompt discovery + metadata
+│   │   ├── provider_registry.py     - ProviderRegistry: discovery, health, capabilities, metadata, validation
+│   │   ├── provider_health.py       - Health monitoring: rolling-window metrics, status classification
+│   │   ├── provider_capabilities.py - Capability detection: 13 flags per provider
+│   │   ├── auth.py                  - Authentication layer: env, .env, config, credential validation
+│   │   ├── rate_limits.py           - Rate limit detection: 429, quota, maintenance, burst limits
+│   │   ├── certification.py         - Provider certification: platinum/gold/silver/bronze classification
+│   │   ├── cross_provider.py        - Cross-provider benchmarking and deterministic ranking
 │   │   ├── recommendation_validation.py - Recommendation stability/confidence checks
 │   │   ├── reliability.py           - Reliability aggregation + latency percentiles
 │   │   ├── statistics.py            - Descriptive stats, confidence intervals, drift
 │   │   ├── token_accounting.py      - Token usage + cost estimation
 │   │   ├── validation.py            - Structural result and metadata validation
-│   │   ├── evaluation/
-│   │   │   └── __init__.py          - Evaluator implementations per category
-│   │   └── plugin/
-│   │       ├── registry.py          - Decorator registration
-│   │       └── manager.py           - PluginManager: discovery, registration, lookup
+│   │   └── evaluation/
+│   │       └── __init__.py          - Evaluator implementations per category
 │   ├── plugins/
 │   │   ├── benchmarks/              - Benchmark plugins (one category per module)
 │   │   │   ├── __init__.py
@@ -261,10 +312,13 @@ benchmark explain --runs 1
 │   │   │   ├── nvidia.py
 │   │   │   ├── ollama.py
 │   │   │   └── openrouter.py
-│   │   └── reporters/               - JSON, Markdown, CSV + Sprint 4 reporters
+│   │   └── reporters/               - JSON, Markdown, CSV + Sprint 4/5 reporters
 │   │       ├── analytics.py         - Sprint 3 analytics reporters
 │   │       ├── generator.py         - JSON/Markdown/CSV report generation
-│   │       └── sprint4.py           - Validation, calibration, reliability, stats, cost, metadata, governance
+│   │       ├── sprint4.py           - Validation, calibration, reliability, stats, cost, metadata, governance
+│   │       ├── provider_comparison.py - Sprint 5 provider comparison reports
+│   │       ├── provider_health.py     - Sprint 5 provider health reports
+│   │       └── capabilities.py        - Sprint 5 capability reports, governance
 │   ├── cli.py                       - Click CLI
 │   ├── interfaces/                  - Abstract interfaces (provider/benchmark/evaluator/reporter/strategy)
 │   ├── plugin/                      - Plugin registry core
@@ -278,6 +332,7 @@ benchmark explain --runs 1
 ├── docs/
 │   ├── sprint-1.md
 │   ├── sprint-4.md
+│   ├── sprint-5.md
 │   └── sprints/
 │       ├── sprint-2.md
 │       └── sprint-3.md
@@ -317,7 +372,7 @@ Cost is estimated from configured token prices in `configs/benchmark.yaml` under
 
 ## Version
 
-Current version: `0.4.0`
+Current version: `0.5.0`
 
 ## Sprint History
 

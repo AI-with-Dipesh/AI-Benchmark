@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from statistics import mean, median, stdev, variance
+from statistics import mean
 from typing import Sequence
 
 from aibenchmark.app.models import BenchmarkResult, StatisticSummary

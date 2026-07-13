@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 from typing import Any
 
-from aibenchmark.app.models import BenchmarkName, BenchmarkResult, ResponseObject
+from aibenchmark.app.models import BenchmarkResult, ResponseObject
 
 
 class BaseBenchmark(ABC):

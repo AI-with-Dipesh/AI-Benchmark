@@ -2,7 +2,7 @@ import json
 import csv
 from pathlib import Path
 
-from aibenchmark.app.models import BenchmarkResult, PluginCategory, Score
+from aibenchmark.app.models import BenchmarkResult, PluginCategory
 from aibenchmark.app.plugin.registry import register
 
 

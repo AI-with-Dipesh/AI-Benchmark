@@ -13,6 +13,9 @@ from aibenchmark.plugins.benchmarks import (  # noqa: F401
 )
 from aibenchmark.plugins.reporters import (  # noqa: F401
     analytics,
+    capabilities,
     generator,
+    provider_comparison,
+    provider_health,
     sprint4,
 )

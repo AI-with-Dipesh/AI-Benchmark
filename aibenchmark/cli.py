@@ -5,7 +5,7 @@ from typing import Any
 from aibenchmark.app.engine import BenchEngine
 from aibenchmark.app.history import load_latest, save_run
 from aibenchmark.app.logging import setup_logging
-from aibenchmark.app.models import BenchmarkName, PluginCategory
+from aibenchmark.app.models import BenchmarkName, BenchmarkResult, PluginCategory
 
 setup_logging()
 
@@ -101,6 +101,229 @@ def provider_list(provider_name):
         raise click.ClickException(f"Failed to list models for {provider_name}: {exc}") from exc
 
 
+@cli.command("providers")
+def providers():
+    """List all registered providers."""
+    import aibenchmark.plugins  # noqa: F401
+    engine = BenchEngine()
+    for name in engine.list_providers():
+        click.echo(name)
+
+
+@provider.command("info")
+@click.argument("provider_name")
+def provider_info(provider_name):
+    """Print detailed provider info and metadata."""
+    import aibenchmark.plugins  # noqa: F401
+    from aibenchmark.app.provider_registry import ProviderRegistry
+
+    registry = ProviderRegistry()
+    try:
+        meta = registry.metadata(provider_name)
+    except ValueError as exc:
+        raise click.ClickException(str(exc)) from exc
+    for k, v in meta.items():
+        click.echo(f"{k}: {v}")
+
+
+@provider.command("health")
+@click.option("--provider", "provider_name", default=None, help="Specific provider to check.")
+def provider_health(provider_name):
+    """Show provider health status."""
+    import aibenchmark.plugins  # noqa: F401
+    from aibenchmark.app.provider_registry import ProviderRegistry
+
+    registry = ProviderRegistry()
+    if provider_name:
+        try:
+            h = registry.health(provider_name)
+        except ValueError as exc:
+            raise click.ClickException(str(exc)) from exc
+        click.echo(f"Provider: {h.provider_name}")
+        click.echo(f"Status: {h.status}")
+        click.echo(f"Availability: {h.availability:.2%}")
+        click.echo(f"Average Latency: {h.average_latency_ms:.1f}ms" if h.average_latency_ms else "Average Latency: N/A")
+        click.echo(f"Failure Rate: {h.failure_rate:.2%}")
+        click.echo(f"Total Checks: {h.total_checks}")
+        click.echo(f"Rate Limit: {h.rate_limit.retry_recommendation}")
+    else:
+        for name in registry.list_providers():
+            h = registry.health(name)
+            click.echo(f"{name}: {h.status} | failure={h.failure_rate:.2%} | latency={h.average_latency_ms or 0:.1f}ms")
+
+
+@provider.command("compare")
+@click.argument("provider_names", nargs=-1)
+def provider_compare(provider_names):
+    """Compare providers and show ranking."""
+    import aibenchmark.plugins  # noqa: F401
+    from aibenchmark.app.provider_registry import ProviderRegistry
+
+    registry = ProviderRegistry()
+    names = list(provider_names) or registry.list_providers()
+    comparison = registry.compare_providers(names, {n: [] for n in names})
+    click.echo("Overall Ranking:")
+    for entry in comparison.get("overall_ranking", []):
+        click.echo(f"#{entry['rank']} {entry['provider']}: score={entry['score']:.4f}")
+
+
+@cli.command("models")
+@click.argument("provider_name", required=False)
+def models(provider_name):
+    """List models for a provider."""
+    import aibenchmark.plugins  # noqa: F401
+    from aibenchmark.app.provider_registry import ProviderRegistry
+
+    registry = ProviderRegistry()
+    if provider_name:
+        names = [provider_name]
+    else:
+        names = registry.list_providers()
+    for name in names:
+        try:
+            ms = registry.list_models(name)
+            click.echo(f"== {name} ({len(ms)} models) ==")
+            for m in ms[:20]:
+                click.echo(f"  {m}")
+            if len(ms) > 20:
+                click.echo(f"  ... and {len(ms) - 20} more")
+        except ValueError as exc:
+            click.echo(f"{name}: {exc}")
+
+
+@cli.command("capabilities")
+@click.argument("provider_name", required=False)
+def capabilities(provider_name):
+    """Show provider capabilities."""
+    import aibenchmark.plugins  # noqa: F401
+    from aibenchmark.app.provider_registry import ProviderRegistry
+
+    registry = ProviderRegistry()
+    if provider_name:
+        names = [provider_name]
+    else:
+        names = registry.list_providers()
+    for name in names:
+        try:
+            caps = registry.capabilities(name)
+            click.echo(f"== {name} ==")
+            for flag in caps.flags():
+                click.echo(f"  {flag}: enabled")
+            if caps.context_window:
+                click.echo(f"  context_window: {caps.context_window}")
+        except ValueError as exc:
+            click.echo(f"{name}: {exc}")
+
+
+@cli.command("auth")
+@click.argument("provider_name", required=False)
+def auth(provider_name):
+    """Validate authentication credentials."""
+    import aibenchmark.plugins  # noqa: F401
+    from aibenchmark.app.provider_registry import ProviderRegistry
+
+    registry = ProviderRegistry()
+    if provider_name:
+        names = [provider_name]
+    else:
+        names = registry.list_providers()
+    for name in names:
+        result = registry.validate_configuration(name)
+        status = "VALID" if result["valid"] else "INVALID"
+        click.echo(f"{name}: {status}")
+        for issue in result.get("issues", []):
+            click.echo(f"  - {issue}")
+
+
+@provider.command("capabilities")
+@click.argument("provider_name", required=False)
+def provider_capabilities(provider_name):
+    """Show provider capabilities."""
+    import aibenchmark.plugins  # noqa: F401
+    from aibenchmark.app.provider_registry import ProviderRegistry
+
+    registry = ProviderRegistry()
+    if provider_name:
+        names = [provider_name]
+    else:
+        names = registry.list_providers()
+    for name in names:
+        try:
+            caps = registry.capabilities(name)
+            click.echo(f"== {name} ==")
+            for flag in caps.flags():
+                click.echo(f"  {flag}: enabled")
+            if caps.context_window:
+                click.echo(f"  context_window: {caps.context_window}")
+        except ValueError as exc:
+            click.echo(f"{name}: {exc}")
+
+
+@provider.command("validate")
+@click.argument("provider_name", required=False)
+def provider_validate(provider_name):
+    """Run full provider validation and generate a report."""
+    import aibenchmark.plugins  # noqa: F401
+    from aibenchmark.app.provider_registry import ProviderRegistry
+
+    registry = ProviderRegistry()
+    if provider_name:
+        names = [provider_name]
+    else:
+        names = registry.list_providers()
+    all_results = registry.validate_all()
+    for name in names:
+        result = all_results.get(name, {"valid": False, "issues": ["Unknown provider"]})
+        status = "PASS" if result.get("valid") else "FAIL"
+        click.echo(f"{name}: {status}")
+        for issue in result.get("issues", []):
+            click.echo(f"  - {issue}")
+
+
+@provider.command("certify")
+@click.argument("provider_name", required=False)
+def provider_certify(provider_name):
+    """Generate provider certification report."""
+    import aibenchmark.plugins  # noqa: F401
+    from aibenchmark.app.provider_registry import ProviderRegistry
+
+    registry = ProviderRegistry()
+    if provider_name:
+        names = [provider_name]
+    else:
+        names = registry.list_providers()
+    for name in names:
+        try:
+            report = registry.certify(name)
+            click.echo(report.summary())
+        except ValueError as exc:
+            click.echo(f"{name}: {exc}")
+        click.echo("")
+
+
+@cli.command("discover")
+def discover():
+    """Discover and list all plugins."""
+    import aibenchmark.plugins  # noqa: F401
+    from aibenchmark.app.plugin.registry import get_manager
+    mgr = get_manager()
+    click.echo("Providers:")
+    for p in mgr.list_names(PluginCategory.PROVIDER):
+        click.echo(f"  {p}")
+    click.echo("Benchmarks:")
+    for p in mgr.list_names(PluginCategory.BENCHMARK):
+        click.echo(f"  {p}")
+    click.echo("Reporters:")
+    for p in mgr.list_names(PluginCategory.REPORTER):
+        click.echo(f"  {p}")
+    click.echo("Evaluators:")
+    for p in mgr.list_names(PluginCategory.EVALUATOR):
+        click.echo(f"  {p}")
+    click.echo("Strategies:")
+    for p in mgr.list_names(PluginCategory.STRATEGY):
+        click.echo(f"  {p}")
+
+
 def main() -> None:
     cli()
 
@@ -126,7 +349,6 @@ def generate(runs: int, out: str) -> None:
         return
     results = latest[0]
     from aibenchmark.app.engine import BenchEngine
-    from aibenchmark.app.history import init_db
 
     # Use cached reporter plugins
     engine = BenchEngine()

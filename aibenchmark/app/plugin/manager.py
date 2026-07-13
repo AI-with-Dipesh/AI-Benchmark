@@ -2,9 +2,8 @@ from __future__ import annotations
 
 import logging
 from importlib.metadata import entry_points
-from typing import Any
 
-from aibenchmark.app.models import BenchmarkResult, PluginCategory
+from aibenchmark.app.models import PluginCategory
 
 logger = logging.getLogger(__name__)
 
@@ -30,6 +29,48 @@ class PluginManager:
 
     def list_names(self, category: PluginCategory) -> list[str]:
         return list(getattr(self, category.value + "s", {}).keys())
+
+    def unload(self, category: PluginCategory, name: str) -> bool:
+        store = getattr(self, category.value + "s", None)
+        if store is None:
+            return False
+        return store.pop(name, None) is not None
+
+    def set_enabled(self, category: PluginCategory, name: str, enabled: bool) -> None:
+        store = getattr(self, category.value + "s", None)
+        if store is None:
+            raise ValueError(f"Unknown category: {category}")
+        cls = store.get(name)
+        if cls is None:
+            raise ValueError(f"{category.value} '{name}' not found")
+        cls.plugin_enabled = enabled
+
+    def get_priority(self, category: PluginCategory, name: str) -> int:
+        cls = self.get(category, name)
+        if cls is None:
+            raise ValueError(f"{category.value} '{name}' not found")
+        return int(getattr(cls, "plugin_priority", 100))
+
+    def set_priority(self, category: PluginCategory, name: str, priority: int) -> None:
+        store = getattr(self, category.value + "s", None)
+        if store is None:
+            raise ValueError(f"Unknown category: {category}")
+        cls = store.get(name)
+        if cls is None:
+            raise ValueError(f"{category.value} '{name}' not found")
+        cls.plugin_priority = int(priority)
+
+    def add_alias(self, category: PluginCategory, name: str, alias: str) -> None:
+        store = getattr(self, category.value + "s", None)
+        if store is None:
+            raise ValueError(f"Unknown category: {category}")
+        cls = store.get(name)
+        if cls is None:
+            raise ValueError(f"{category.value} '{name}' not found")
+        aliases: list[str] = getattr(cls, "plugin_aliases", [])
+        if alias not in aliases:
+            aliases.append(alias)
+        cls.plugin_aliases = aliases
 
     def discover(self) -> None:
         # Map entry point group name to plugin category
