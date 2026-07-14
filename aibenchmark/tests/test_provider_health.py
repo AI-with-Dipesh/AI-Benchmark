@@ -3,7 +3,7 @@ from __future__ import annotations
 import pytest
 
 from aibenchmark.app.provider_health import HealthTracker, reset_health_tracker, get_health_tracker
-from aibenchmark.app.models import ProviderStatus, ProviderHealth
+from aibenchmark.app.models import ProviderStatus
 from aibenchmark.app.provider_registry import ProviderRegistry
 
 

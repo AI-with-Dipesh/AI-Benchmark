@@ -403,7 +403,6 @@ def compare(against_runs: int, out: str) -> None:
         click.echo("Not enough history for comparison.")
         return
     results_a = latest[0]
-    results_b = latest[1]
     engine = BenchEngine()
     out_path = Path(out)
     out_path.mkdir(parents=True, exist_ok=True)
@@ -475,9 +474,7 @@ def validate(out: str) -> None:
     from aibenchmark.app.engine import BenchEngine
     from aibenchmark.app.history import load_latest
     from aibenchmark.app.auto_validation import auto_validate
-    from aibenchmark.app.plugin.registry import get_manager
 
-    manager = get_manager()
     latest = load_latest(1)
     if not latest:
         click.echo("No history available.")
@@ -501,9 +498,6 @@ def calibrate(out: str) -> None:
     """Run benchmark calibration and generate report."""
     from aibenchmark.app.engine import BenchEngine
     from aibenchmark.app.history import load_latest
-    from aibenchmark.app.plugin.registry import get_manager
-
-    manager = get_manager()
     runs = load_latest(5)
     if not runs:
         click.echo("No history available.")
@@ -523,9 +517,6 @@ def stats(runs: int, out: str) -> None:
     """Generate statistical summary for latest runs."""
     from aibenchmark.app.engine import BenchEngine
     from aibenchmark.app.history import load_latest
-    from aibenchmark.app.plugin.registry import get_manager
-
-    manager = get_manager()
     latest = load_latest(runs)
     if not latest:
         click.echo("No history available.")
@@ -545,9 +536,6 @@ def reliability(runs: int, out: str) -> None:
     """Generate reliability metrics report."""
     from aibenchmark.app.engine import BenchEngine
     from aibenchmark.app.history import load_latest
-    from aibenchmark.app.plugin.registry import get_manager
-
-    manager = get_manager()
     latest = load_latest(runs)
     if not latest:
         click.echo("No history available.")
@@ -566,9 +554,6 @@ def reproduce(out: str) -> None:
     """Print reproducibility metadata for latest run."""
     from aibenchmark.app.engine import BenchEngine
     from aibenchmark.app.history import load_latest
-    from aibenchmark.app.plugin.registry import get_manager
-
-    manager = get_manager()
     latest = load_latest(1)
     if not latest:
         click.echo("No history available.")
@@ -587,9 +572,6 @@ def cost(out: str) -> None:
     """Generate cost estimation report."""
     from aibenchmark.app.engine import BenchEngine
     from aibenchmark.app.history import load_latest
-    from aibenchmark.app.plugin.registry import get_manager
-
-    manager = get_manager()
     latest = load_latest(1)
     if not latest:
         click.echo("No history available.")
@@ -608,9 +590,6 @@ def tokens(out: str) -> None:
     """Generate token usage report."""
     from aibenchmark.app.engine import BenchEngine
     from aibenchmark.app.history import load_latest
-    from aibenchmark.app.plugin.registry import get_manager
-
-    manager = get_manager()
     latest = load_latest(1)
     if not latest:
         click.echo("No history available.")
@@ -629,9 +608,6 @@ def governance(out: str) -> None:
     """Generate governance/recommendation explainability report."""
     from aibenchmark.app.engine import BenchEngine
     from aibenchmark.app.history import load_latest
-    from aibenchmark.app.plugin.registry import get_manager
-
-    manager = get_manager()
     latest = load_latest(1)
     if not latest:
         click.echo("No history available.")
@@ -677,7 +653,6 @@ def select(benchmark_name, provider, model):
     """Automatic model selection for category."""
     import aibenchmark.plugins  # noqa: F401
     from aibenchmark.app.engine import BenchEngine
-    from aibenchmark.app.models import BenchmarkName
 
     engine = BenchEngine()
     try:

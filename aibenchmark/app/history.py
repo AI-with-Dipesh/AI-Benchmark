@@ -187,10 +187,8 @@ def load_latest(n: int = 1, db_path: Path | None = None) -> list[list[BenchmarkR
 
 
 def load_run(run_id: int, db_path: Path | None = None, conn: sqlite3.Connection | None = None) -> list[BenchmarkResult]:
-    owned = False
     if conn is None:
         conn = _connect(db_path)
-        owned = True
     init_db(conn)
     run = conn.execute("SELECT * FROM runs WHERE run_id = ?", (run_id,)).fetchone()
     if not run:

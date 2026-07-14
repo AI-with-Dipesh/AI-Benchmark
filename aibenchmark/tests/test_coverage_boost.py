@@ -1,30 +1,17 @@
 from __future__ import annotations
 
 from pathlib import Path
-
-import pytest
+from typing import Any
 
 from aibenchmark.app.analytics import (
     build_comparison,
-    build_leaderboard,
     build_team,
     build_trends,
     recommend,
     _reliability_score,
-    best_value,
-    most_stable,
-    fastest,
-    highest_quality,
 )
 from aibenchmark.app.history import load_latest, save_run
 from aibenchmark.app.models import BenchmarkName, BenchmarkResult, ProviderType, Score
-from aibenchmark.plugins.reporters.analytics import (
-    generate_compare,
-    generate_leaderboard,
-    generate_recommendations,
-    generate_team,
-    generate_trends,
-)
 
 
 def _make_result(provider: str, model: str, overall: float, scores: dict[str, float], latency_ms: float | None = None, reliability: float | None = None, timestamp: str | None = None) -> BenchmarkResult:

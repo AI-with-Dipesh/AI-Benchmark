@@ -35,7 +35,6 @@ class ProviderComparisonReporter:
         path.write_text("\n".join(lines), encoding="utf-8")
 
     def _header(self, comparison: dict[str, Any]) -> str:
-        provider_count = len(comparison["providers"])
         lines = [
             "# Provider Comparison Report",
             "",

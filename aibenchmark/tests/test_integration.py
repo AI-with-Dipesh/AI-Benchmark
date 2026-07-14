@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from pathlib import Path
-import pytest
 
 from aibenchmark.app.engine import BenchEngine
 from aibenchmark.app.models import BenchmarkName, PluginCategory, ProviderType
@@ -37,7 +36,7 @@ def test_end_to_end_mocked(monkeypatch, tmp_path: Path):
     assert len(result.scores) == 1
     assert result.metadata.get("timestamp")
 
-    produced = engine.generate_reports([result], tmp_path)
+    engine.generate_reports([result], tmp_path)
     assert (tmp_path / "results.json").exists()
 
 
@@ -64,7 +63,7 @@ def test_end_to_end_all_categories_mocked(monkeypatch, tmp_path: Path) -> None:
         assert result.overall >= 0.0
         assert result.metadata.get("timestamp")
         assert len(result.scores) >= 1
-    produced = engine.generate_reports(results, tmp_path)
+    engine.generate_reports(results, tmp_path)
     assert (tmp_path / "results.json").exists()
     assert (tmp_path / "results.md").exists()
     assert (tmp_path / "results.csv").exists()

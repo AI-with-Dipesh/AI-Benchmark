@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import importlib
 import logging
-import sys
 import time
 from typing import TYPE_CHECKING, Any, Type
 

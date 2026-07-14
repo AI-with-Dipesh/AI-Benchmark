@@ -1,16 +1,15 @@
 from __future__ import annotations
 
 import threading
-import time
 
 import pytest
 
 from aibenchmark.app.config import AppConfig, ConfigError
 from aibenchmark.app.execution_policy import ExecutionPolicy
-from aibenchmark.app.history import HistoryWriter, save_run
+from aibenchmark.app.history import HistoryWriter
 from aibenchmark.app.model_selector import ModelSelector
-from aibenchmark.app.models import BenchmarkName, PluginCategory, ProviderCapabilities, RoutingContext, RoutingPlan
-from aibenchmark.app.provider_health import HealthTracker, get_health_tracker, reset_health_tracker
+from aibenchmark.app.models import BenchmarkName, ProviderCapabilities, RoutingContext, RoutingPlan
+from aibenchmark.app.provider_health import HealthTracker, reset_health_tracker
 
 
 class TestHealthTrackerConcurrency:
@@ -102,7 +101,6 @@ class TestHistoryWriter:
 
 class TestConfigRouting:
     def test_defaults_when_missing_routing(self, tmp_path) -> None:  # type: ignore[no-untyped-def]
-        import os
         import yaml
         cfg_dir = tmp_path / "config"
         cfg_dir.mkdir()

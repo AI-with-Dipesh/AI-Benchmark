@@ -1,18 +1,11 @@
 from __future__ import annotations
 
-import sqlite3
-import tempfile
 from datetime import datetime, timezone
 from pathlib import Path
 
 import pytest
 
 from aibenchmark.app.analytics import (
-    ComparisonDelta,
-    LeaderboardEntry,
-    Recommendation,
-    TeamRole,
-    TrendEntry,
     best_value,
     build_comparison,
     build_leaderboard,
@@ -22,7 +15,7 @@ from aibenchmark.app.analytics import (
     highest_quality,
     recommend,
 )
-from aibenchmark.app.history import DB_PATH, init_db, load_latest, load_run, save_run
+from aibenchmark.app.history import load_latest, load_run, save_run
 from aibenchmark.app.models import BenchmarkName, BenchmarkResult, ProviderType, Score
 
 

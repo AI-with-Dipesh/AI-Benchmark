@@ -4,8 +4,8 @@ import logging
 import time
 from typing import Any
 
-from aibenchmark.app.config import AppConfig, ConfigError
-from aibenchmark.app.models import BenchmarkName, PluginCategory, RoutingPlan
+from aibenchmark.app.config import AppConfig
+from aibenchmark.app.models import PluginCategory, RoutingPlan
 from aibenchmark.app.plugin.registry import register
 from aibenchmark.app.provider_health import get_health_tracker
 from aibenchmark.app.provider_registry import ProviderRegistry
@@ -46,7 +46,6 @@ class ExecutionPolicy(BaseStrategy):
         self._cooldowns[provider_name] = time.time()
 
     def apply(self, primary_plan: RoutingPlan) -> RoutingPlan:
-        circuit = self.config.routing.get("circuit_breaker", {})
         chain = self.config.routing.get("fallback_chain", [])
         if not self.config.routing.get("fallback_enabled", False):
             return primary_plan

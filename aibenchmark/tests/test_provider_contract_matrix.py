@@ -1,11 +1,9 @@
 from __future__ import annotations
 
 import inspect
-from typing import Any
 
 import pytest
 
-from aibenchmark.app.models import ProviderType, PluginCategory
 from aibenchmark.app.plugin.registry import get_manager
 from aibenchmark.interfaces.provider import BaseProvider
 

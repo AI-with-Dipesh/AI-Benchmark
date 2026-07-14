@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import pytest
 
 from aibenchmark.app.rate_limits import RateLimitDetector, RateLimitStatus
 

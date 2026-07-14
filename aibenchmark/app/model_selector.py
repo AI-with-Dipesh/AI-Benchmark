@@ -4,7 +4,7 @@ import logging
 from typing import Any
 
 from aibenchmark.app.config import AppConfig, ConfigError
-from aibenchmark.app.models import BenchmarkName, PluginCategory, ProviderCapabilities, RoutingContext, RoutingPlan
+from aibenchmark.app.models import PluginCategory, ProviderCapabilities, RoutingContext, RoutingPlan
 from aibenchmark.app.plugin.registry import register
 from aibenchmark.app.provider_health import get_health_tracker
 from aibenchmark.app.provider_registry import ProviderRegistry

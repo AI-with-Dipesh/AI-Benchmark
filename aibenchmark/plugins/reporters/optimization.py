@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Any
 
 from aibenchmark.app.models import BenchmarkResult, PluginCategory
 from aibenchmark.app.plugin.registry import register
@@ -31,7 +30,7 @@ class OptimizationReporter:
                 lines.append(f"- {key}: avg ${avg:.4f} over {len(costs)} run(s)")
             lines.append("")
             cheapest_key, _ = ranked[0]
-            lines.append(f"### Recommendation\n")
+            lines.append("### Recommendation\n")
             lines.append(f"- Cheapest qualified model: **{cheapest_key}**")
             lines.append("")
         else:

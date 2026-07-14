@@ -4,9 +4,7 @@ import pytest
 
 from aibenchmark.app.config import ConfigError
 from aibenchmark.app.engine import BenchEngine
-from aibenchmark.app.execution_policy import ExecutionPolicy
-from aibenchmark.app.model_selector import ModelSelector
-from aibenchmark.app.models import BenchmarkName, RoutingContext, RoutingPlan
+from aibenchmark.app.models import BenchmarkName
 from aibenchmark.app.parallel_executor import ParallelExecutor
 
 
@@ -87,8 +85,7 @@ class TestReportersRegistered:
 
     def test_litellm_config_generates_yaml(self, tmp_path) -> None:  # type: ignore[no-untyped-def]
         import aibenchmark.plugins  # noqa: F401
-        from aibenchmark.app.engine import BenchEngine
-        from aibenchmark.app.models import BenchmarkResult, PluginCategory
+        from aibenchmark.app.models import PluginCategory
         from aibenchmark.app.plugin.registry import get_manager
 
         mgr = get_manager()

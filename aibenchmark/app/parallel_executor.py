@@ -4,7 +4,6 @@ import logging
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from typing import Any, Callable, Sequence
 
-from aibenchmark.app.history import HistoryWriter
 
 logger = logging.getLogger(__name__)
 

@@ -11,12 +11,7 @@ from aibenchmark.app.models import (
     PluginCategory,
     ProviderType,
     RecommendationStability,
-    ReliabilityEntry,
-    ReliabilityReport,
     Score,
-    StatisticSummary,
-    TokenUsage,
-    ValidationReport,
 )
 from aibenchmark.app.recommendation_validation import validate_recommendations
 from aibenchmark.app.reliability import build_reliability
@@ -193,7 +188,7 @@ class TestEngineRetryTimeout:
     def test_retry_count_respected(self, monkeypatch, tmp_path: Path) -> None:
         monkeypatch.setenv("OLLAMA_API_KEY", "fake")
         from aibenchmark.app.engine import BenchEngine
-        from aibenchmark.app.models import PluginCategory, ProviderType, ResponseObject
+        from aibenchmark.app.models import ProviderType
 
         engine = BenchEngine()
 
@@ -219,7 +214,7 @@ class TestEngineRetryTimeout:
     def test_non_retryable_exception_fails_immediately(self, monkeypatch) -> None:
         monkeypatch.setenv("OLLAMA_API_KEY", "fake")
         from aibenchmark.app.engine import BenchEngine
-        from aibenchmark.app.models import PluginCategory, ProviderType
+        from aibenchmark.app.models import ProviderType
 
         engine = BenchEngine()
 
@@ -245,7 +240,7 @@ class TestEngineRetryTimeout:
     def test_string_benchmark_name_converts(self, monkeypatch, tmp_path: Path) -> None:
         monkeypatch.setenv("OLLAMA_API_KEY", "fake")
         from aibenchmark.app.engine import BenchEngine
-        from aibenchmark.app.models import PluginCategory, ProviderType, ResponseObject
+        from aibenchmark.app.models import ProviderType, ResponseObject
 
         engine = BenchEngine()
 

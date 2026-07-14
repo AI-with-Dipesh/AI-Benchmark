@@ -306,8 +306,6 @@ def _leaderboard_recommendation_string(result: BenchmarkResult) -> str:
 
 
 def build_comparison(run_a: Sequence[BenchmarkResult], run_b: Sequence[BenchmarkResult], label_a: str = "Latest", label_b: str = "Previous") -> dict[str, ComparisonDelta]:
-    grouped_a = _results_by_model(run_a)
-    grouped_b = _results_by_model(run_b)
     deltas: dict[str, ComparisonDelta] = {}
     categories = sorted({s.benchmark.value for r in run_a for s in r.scores} | {s.benchmark.value for r in run_b for s in r.scores})
     for category in categories:

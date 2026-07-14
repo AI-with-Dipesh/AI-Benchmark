@@ -57,7 +57,6 @@ class ProviderCertifier:
 
     def certify(self, provider_name: str) -> ProviderCertificationReport:
         issues: list[str] = []
-        scores: dict[str, float] = {}
 
         # 1. Configuration validation
         try:
@@ -147,15 +146,6 @@ class ProviderCertifier:
 
         # 5. Reliability score
         reliability_score = health_score * 0.7 + benchmark_success_rate * 0.3
-
-        scores = {
-            "reliability": reliability_score,
-            "benchmark_success_rate": benchmark_success_rate,
-            "health": health_score,
-            "metadata_completeness": metadata_completeness,
-            "capability_detection": capability_detection_score,
-            "configuration_valid": 1.0 if config_valid else 0.0,
-        }
 
         # Certification level logic
         if not config_valid or not connection_health or metadata_completeness < 0.5:

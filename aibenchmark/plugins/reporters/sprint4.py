@@ -170,7 +170,6 @@ def generate_statistics(run: list[BenchmarkResult], path: Path, **kwargs: object
 
     # Cross-run metrics when available
     if len(runs) > 1:
-        flat = [r for run in runs for r in run]
         lines.append("## Cross-Run Metrics\n")
         drift = score_drift(runs)
         for model, val in drift.items():

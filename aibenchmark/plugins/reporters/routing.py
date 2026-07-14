@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Any
 
 from aibenchmark.app.models import BenchmarkName, BenchmarkResult, PluginCategory
 from aibenchmark.app.plugin.registry import register

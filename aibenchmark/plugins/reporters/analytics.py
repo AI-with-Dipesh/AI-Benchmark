@@ -33,7 +33,6 @@ def generate_leaderboard(results: list[BenchmarkResult], path: Path, **kwargs: o
     ]
     for row in rows:
         cats = ", ".join(f"{k} {v:.2f}" for k, v in row.category_scores.items())
-        latency = f"{row.latency_ms:.0f} ms" if row.latency_ms is not None else "-"
         lines.append(
             f"| {row.rank} | {row.model} | {row.provider} | {row.overall:.2f} | {cats} | {row.recommendation} |"
         )
