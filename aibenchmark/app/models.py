@@ -419,6 +419,39 @@ class TokenReport:
     provider_model_breakdown: dict[str, TokenUsage]
 
 
+# Sprint 6: intelligent routing models
+@dataclass(frozen=True)
+class ExecutionPolicy:
+    retry_count: int = 2
+    backoff_factor: float = 1.5
+    fallback_enabled: bool = False
+    fallback_chain: list[str] = field(default_factory=list)
+    circuit_breaker_threshold: float = 0.5
+    circuit_breaker_cooldown_seconds: int = 300
+
+
+@dataclass(frozen=True)
+class RoutingContext:
+    benchmark_name: BenchmarkName
+    provider_name: str | None = None
+    model: str | None = None
+    max_cost: float | None = None
+    required_capabilities: list[str] = field(default_factory=list)
+    prefer_free: bool = False
+    min_capability_score: float = 0.7
+    history_runs: int = 5
+
+
+@dataclass(frozen=True)
+class RoutingPlan:
+    provider: str
+    model: str
+    estimated_cost: float | None = None
+    rationale: str = ""
+    fallback_providers: list[str] = field(default_factory=list)
+    fallback_models: list[str] = field(default_factory=list)
+
+
 @dataclass(frozen=True)
 class CostReport:
     total_cost: float

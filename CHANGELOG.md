@@ -1,5 +1,22 @@
 # Changelog
 
+## [0.6.0] - 2026-07-13
+
+### Added
+- Thread-safe `HealthTracker` with `threading.Lock` for parallel execution safety.
+- `HistoryWriter` singleton with SQLite write serialization.
+- Routing configuration validation with defaults and back-compat.
+- Strategy plugins: `ModelSelector` (cost_aware, capability_first, health_first, round_robin) and `ExecutionPolicy` (fallback + circuit breaker).
+- Engine delegation: `BenchEngine.select_model()` and `BenchEngine.apply_policy()`.
+- `ParallelExecutor`: thread-pool based, deterministic ordering, job-level failure isolation.
+- Reporters: `litellm_config`, `routing`, `optimization`.
+- CLI commands: `route`, `select`, `fallback`, `optimize`, `parallel`, `config generate-litellm`.
+- `PluginManager` pluralization fix for `PluginCategory.STRATEGY`.
+
+### Changed
+- Benchmark version default now reads from `pyproject.toml` (`0.6.0`).
+- SQLite connections use `check_same_thread=False` for concurrent write safety.
+
 ## [0.5.0] - 2026-07-13
 
 ### Added

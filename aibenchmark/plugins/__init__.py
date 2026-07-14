@@ -15,7 +15,10 @@ from aibenchmark.plugins.reporters import (  # noqa: F401
     analytics,
     capabilities,
     generator,
+    litellm_config,
+    optimization,
     provider_comparison,
     provider_health,
+    routing,
     sprint4,
 )

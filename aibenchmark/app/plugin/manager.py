@@ -17,7 +17,12 @@ class PluginManager:
         self.strategies: dict[str, type] = {}
 
     def register(self, category: PluginCategory, name: str, cls: type) -> None:
-        store = getattr(self, category.value + "s", None)
+        store_name = category.value
+        if store_name == "strategy":
+            store_name = "strategies"
+        else:
+            store_name = f"{store_name}s"
+        store = getattr(self, store_name, None)
         if store is None:
             raise ValueError(f"Unknown category: {category}")
         if name in store:
@@ -25,19 +30,27 @@ class PluginManager:
         store[name] = cls
 
     def get(self, category: PluginCategory, name: str) -> type | None:
-        return getattr(self, category.value + "s", {}).get(name)
+        store_name = category.value if category.value != "strategy" else "strategies"
+        store = getattr(self, f"{store_name}s" if store_name != "strategies" else store_name, None)
+        if store is None:
+            return None
+        return store.get(name)
 
     def list_names(self, category: PluginCategory) -> list[str]:
-        return list(getattr(self, category.value + "s", {}).keys())
+        store_name = category.value if category.value != "strategy" else "strategies"
+        store = getattr(self, f"{store_name}s" if store_name != "strategies" else store_name, {})
+        return list(store.keys())
 
     def unload(self, category: PluginCategory, name: str) -> bool:
-        store = getattr(self, category.value + "s", None)
+        store_name = category.value if category.value != "strategy" else "strategies"
+        store = getattr(self, f"{store_name}s" if store_name != "strategies" else store_name, None)
         if store is None:
             return False
         return store.pop(name, None) is not None
 
     def set_enabled(self, category: PluginCategory, name: str, enabled: bool) -> None:
-        store = getattr(self, category.value + "s", None)
+        store_name = category.value if category.value != "strategy" else "strategies"
+        store = getattr(self, f"{store_name}s" if store_name != "strategies" else store_name, None)
         if store is None:
             raise ValueError(f"Unknown category: {category}")
         cls = store.get(name)
@@ -46,13 +59,18 @@ class PluginManager:
         cls.plugin_enabled = enabled
 
     def get_priority(self, category: PluginCategory, name: str) -> int:
-        cls = self.get(category, name)
+        store_name = category.value if category.value != "strategy" else "strategies"
+        store = getattr(self, f"{store_name}s" if store_name != "strategies" else store_name, None)
+        if store is None:
+            raise ValueError(f"Unknown category: {category}")
+        cls = store.get(name)
         if cls is None:
             raise ValueError(f"{category.value} '{name}' not found")
         return int(getattr(cls, "plugin_priority", 100))
 
     def set_priority(self, category: PluginCategory, name: str, priority: int) -> None:
-        store = getattr(self, category.value + "s", None)
+        store_name = category.value if category.value != "strategy" else "strategies"
+        store = getattr(self, f"{store_name}s" if store_name != "strategies" else store_name, None)
         if store is None:
             raise ValueError(f"Unknown category: {category}")
         cls = store.get(name)
@@ -61,7 +79,8 @@ class PluginManager:
         cls.plugin_priority = int(priority)
 
     def add_alias(self, category: PluginCategory, name: str, alias: str) -> None:
-        store = getattr(self, category.value + "s", None)
+        store_name = category.value if category.value != "strategy" else "strategies"
+        store = getattr(self, f"{store_name}s" if store_name != "strategies" else store_name, None)
         if store is None:
             raise ValueError(f"Unknown category: {category}")
         cls = store.get(name)

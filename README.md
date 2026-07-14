@@ -46,6 +46,16 @@ Production-grade LLM benchmarking for AI engineering tasks.
   - Provider certification (platinum/gold/silver/bronze).
   - Provider comparison reports (capabilities, latency, reliability, cost, token efficiency).
   - CLI commands: `providers`, `provider info`, `provider health`, `provider compare`, `models`, `capabilities`, `auth`, `discover`, `provider validate`, `provider certify`.
+- Sprint 6 Intelligent Routing & Automatic Model Selection:
+  - Strategy plugin framework operational via `PluginCategory.STRATEGY`.
+  - Automatic model selection strategies: `cost_aware`, `capability_first`, `health_first`, `round_robin`.
+  - LiteLLM-style routing configuration generation.
+  - Fallback execution policy with circuit breaker.
+  - Optional multi-provider parallel execution with deterministic ordering.
+  - New reporters: `routing`, `optimization`, `litellm_config`.
+  - New CLI commands: `route`, `select`, `fallback`, `optimize`, `parallel`, `config generate-litellm`.
+  - Thread-safe `HealthTracker` and `HistoryWriter` for parallel execution safety.
+  - CI workflow with test, lint, and type-check.
 - CLI:
   - `benchmark run main` executes all configured benchmarks.
   - `benchmark leaderboard generate` builds historical leaderboards.
@@ -89,6 +99,9 @@ aibenchmark/
     rate_limits.py           - Rate limit detection: 429, quota, maintenance, burst limits
     certification.py         - Provider certification: platinum/gold/silver/bronze classification
     cross_provider.py        - Cross-provider benchmarking and deterministic ranking
+    execution_policy.py      - Sprint 6 fallback/circuit-breaker policy
+    model_selector.py        - Sprint 6 automatic model selection
+    parallel_executor.py     - Sprint 6 parallel execution coordinator
   plugins/
     benchmarks/             - Benchmark plugins (one category per module)
     providers/              - Provider plugins
@@ -100,7 +113,6 @@ aibenchmark/
       provider_health.py     - Sprint 5 provider health reports
       capabilities.py        - Sprint 5 capability reports
     evaluators/             - Optional external evaluator plugins
-    strategies/             - Optional execution strategies
   cli.py                     - Click CLI: run, recommend, team, explain, validate, calibrate, providers, health, compare, models, capabilities, auth, discover, certify
   tests/                     - pytest suite
   prompts/                   - YAML prompt files per benchmark
@@ -118,7 +130,7 @@ pip install -e .
 ## Requirements
 
 - Python 3.13+
-- Dependencies: httpx, pydantic, pyyaml, rich, click, jinja2, tenacity, python-dotenv
+- Dependencies: httpx, pydantic, pyyaml, click, python-dotenv
 - Dev: pytest, mypy, ruff, pytest-cov
 
 ## Usage
@@ -193,6 +205,12 @@ benchmark explain --runs 1
 - `benchmark cost` Generate cost estimation report.
 - `benchmark tokens` Generate token usage report.
 - `benchmark governance` Generate governance/recommendation explainability report.
+- `benchmark route [benchmark]` Show routing plan for a benchmark without executing.
+- `benchmark select <benchmark> [--provider] [--model]` Automatic model selection.
+- `benchmark fallback <provider> [model]` Test fallback chain.
+- `benchmark optimize [-b benchmark...] [--provider]` Cost-optimized execution preview.
+- `benchmark parallel -p <provider> [-b benchmark...]` Multi-provider parallel execution.
+- `benchmark config generate-litellm` Generate LiteLLM configuration.
 
 ## Configuration
 
@@ -312,7 +330,7 @@ benchmark explain --runs 1
 │   │   │   ├── nvidia.py
 │   │   │   ├── ollama.py
 │   │   │   └── openrouter.py
-│   │   └── reporters/               - JSON, Markdown, CSV + Sprint 4/5 reporters
+│   │   └── reporters/               - JSON, Markdown, CSV + Sprint 4/5 reporters + Sprint 6 routing/optimization/LiteLLM
 │   │       ├── analytics.py         - Sprint 3 analytics reporters
 │   │       ├── generator.py         - JSON/Markdown/CSV report generation
 │   │       ├── sprint4.py           - Validation, calibration, reliability, stats, cost, metadata, governance
@@ -325,6 +343,9 @@ benchmark explain --runs 1
 │   │   ├── __init__.py
 │   │   ├── registry.py
 │   │   └── manager.py
+│   ├── execution_policy.py           - Sprint 6 fallback/circuit-breaker policy
+│   ├── model_selector.py             - Sprint 6 automatic model selection
+│   ├── parallel_executor.py          - Sprint 6 parallel execution coordinator
 │   └── tests/                       - pytest suite
 ├── configs/
 │   ├── benchmark.yaml
@@ -333,6 +354,9 @@ benchmark explain --runs 1
 │   ├── sprint-1.md
 │   ├── sprint-4.md
 │   ├── sprint-5.md
+│   ├── sprint-6-plan.md
+│   ├── architecture/
+│   │   └── sprint-6-architecture-review.md
 │   └── sprints/
 │       ├── sprint-2.md
 │       └── sprint-3.md
@@ -352,6 +376,8 @@ benchmark explain --runs 1
 - Sprint 2: Multi-category benchmarks + evaluation engine + weighted scoring + rich reports
 - Sprint 3: History, trend analysis, leaderboard, recommendations, confidence engine, AI engineering team builder
 - Sprint 4: Validation, calibration, reliability, token accounting, retry/timeout policies, metadata
+- Sprint 5: Universal Provider Platform
+- Sprint 6: Intelligent Routing & Automatic Model Selection
 
 ## Operational Notes
 
@@ -372,7 +398,7 @@ Cost is estimated from configured token prices in `configs/benchmark.yaml` under
 
 ## Version
 
-Current version: `0.5.0`
+Current version: `0.6.0`
 
 ## Sprint History
 
@@ -380,6 +406,8 @@ Current version: `0.5.0`
 - **Sprint 2**: Multi-category benchmarks, objective evaluation, weighted scoring, prompt versioning, CSV/Markdown/JSON reports.
 - **Sprint 3**: SQLite history, analytics engine, trend analysis, historical leaderboards, model recommendations with confidence, AI engineering team assembly, run comparison.
 - **Sprint 4**: Benchmark validation, calibration, statistics, reliability metrics, token/cost accounting, retry/timeout policies, reproducibility metadata, expanded CLI and reporters.
+- **Sprint 5**: Universal Provider Interface, dynamic provider plugins, provider registry, health monitoring, auth, rate limits, certification, cross-provider benchmarking, provider comparison/health/capabilities reports.
+- **Sprint 6**: Intelligent routing, automatic model selection, fallback/circuit-breaker policy, parallel execution, LiteLLM config generation, routing/optimization reporters, coverage/health history.
 
 ## License
 

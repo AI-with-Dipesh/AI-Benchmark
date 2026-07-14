@@ -2,6 +2,7 @@ import click
 from pathlib import Path
 from typing import Any
 
+from aibenchmark.app.config import ConfigError
 from aibenchmark.app.engine import BenchEngine
 from aibenchmark.app.history import load_latest, save_run
 from aibenchmark.app.logging import setup_logging
@@ -641,6 +642,142 @@ def governance(out: str) -> None:
     engine = BenchEngine()
     engine.generate_reports(results, out_path, formats=["governance"])
     click.echo(f"Governance report written to {out_path / 'results.governance'}")
+
+
+@cli.command("route")
+@click.argument("benchmark_name", required=False)
+def route(benchmark_name):
+    """Show routing plan for benchmark without executing."""
+    import aibenchmark.plugins  # noqa: F401
+    from aibenchmark.app.engine import BenchEngine
+    from aibenchmark.app.models import BenchmarkName
+
+    engine = BenchEngine()
+    names = [BenchmarkName(benchmark_name)] if benchmark_name else list(BenchmarkName)
+    for name in names:
+        try:
+            plan = engine.select_model({"benchmark_name": name.value})
+        except Exception as exc:
+            click.echo(f"{name.value}: ERROR {exc}")
+            continue
+        click.echo(f"=== {name.value} ===")
+        click.echo(f"Provider: {plan['provider']}")
+        click.echo(f"Model: {plan['model']}")
+        click.echo(f"Rationale: {plan['rationale']}")
+        if plan.get("fallback_providers"):
+            click.echo(f"Fallbacks: {', '.join(plan['fallback_providers'])}")
+        click.echo("")
+
+
+@cli.command("select")
+@click.argument("benchmark_name")
+@click.option("--provider", default=None)
+@click.option("--model", default=None)
+def select(benchmark_name, provider, model):
+    """Automatic model selection for category."""
+    import aibenchmark.plugins  # noqa: F401
+    from aibenchmark.app.engine import BenchEngine
+    from aibenchmark.app.models import BenchmarkName
+
+    engine = BenchEngine()
+    try:
+        plan = engine.select_model(
+            {
+                "benchmark_name": benchmark_name,
+                "provider_name": provider,
+                "model": model,
+            }
+        )
+    except Exception as exc:
+        raise click.ClickException(str(exc)) from exc
+    click.echo(f"Selected: {plan['provider']} / {plan['model']}")
+    click.echo(f"Rationale: {plan['rationale']}")
+
+
+@cli.command("fallback")
+@click.argument("provider_name")
+@click.argument("model", required=False)
+def fallback(provider_name, model):
+    """Test fallback chain for provider/model."""
+    import aibenchmark.plugins  # noqa: F401
+    from aibenchmark.app.engine import BenchEngine
+
+    engine = BenchEngine()
+    plan = {
+        "provider": provider_name,
+        "model": model or "",
+        "fallback_providers": engine.config.routing.get("fallback_chain", []),
+    }
+    result = engine.apply_policy(plan)
+    click.echo(f"Primary: {result['provider']} / {result['model']}")
+    click.echo(f"Fallbacks: {', '.join(result.get('fallback_providers', []))}")
+
+
+@cli.command("optimize")
+@click.option("--benchmark", "-b", multiple=True, default=None)
+@click.option("--provider", default=None)
+def optimize(benchmark, provider):
+    """Cost-optimized benchmark execution preview."""
+    import aibenchmark.plugins  # noqa: F401
+    from aibenchmark.app.engine import BenchEngine
+    from aibenchmark.app.models import BenchmarkName
+
+    engine = BenchEngine()
+    names = [BenchmarkName(b) for b in benchmark] if benchmark else list(BenchmarkName)
+    for name in names:
+        try:
+            plan = engine.select_model(
+                {"benchmark_name": name.value, "provider_name": provider, "prefer_free": True}
+            )
+        except Exception as exc:
+            click.echo(f"{name.value}: ERROR {exc}")
+            continue
+        click.echo(f"{name.value}: {plan['provider']} / {plan['model']} (est={plan.get('estimated_cost', 0.0):.4f})")
+
+
+@cli.command("parallel")
+@click.option("--providers", "-p", multiple=True, required=True)
+@click.option("--benchmark", "-b", multiple=True, default=None)
+def parallel(providers, benchmark):
+    """Multi-provider parallel execution."""
+    import aibenchmark.plugins  # noqa: F401
+    from aibenchmark.app.engine import BenchEngine
+    from aibenchmark.app.models import BenchmarkName
+
+    try:
+        engine = BenchEngine()
+    except RuntimeError as exc:
+        raise click.ClickException(str(exc)) from exc
+    names = [BenchmarkName(b) for b in benchmark] if benchmark else engine.list_benchmarks()
+    model = engine.config.defaults().get("default_model", "")
+    messages = [{"role": "user", "content": "Say hello"}]
+    benchmark_strs = [n.value if isinstance(n, BenchmarkName) else str(n) for n in names]
+    try:
+        results = engine.run_parallel(list(providers), model, benchmark_strs, messages)
+    except ConfigError as exc:
+        raise click.ClickException(str(exc)) from exc
+    for r in results:
+        status = r.metadata.get("status", "success")
+        click.echo(f"{r.provider.value}/{r.model}: {r.overall:.2f} [{status}]")
+
+
+@cli.group("config")
+def config_group():
+    pass
+
+
+@config_group.command("generate-litellm")
+@click.option("--out", "-o", default="configs/litellm.yaml", show_default=True)
+def config_generate_litellm(out):
+    """Generate LiteLLM configuration."""
+    import aibenchmark.plugins  # noqa: F401
+    from aibenchmark.app.engine import BenchEngine
+
+    engine = BenchEngine()
+    path = Path(out)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    engine.generate_reports([], path, formats=["litellm_config"])
+    click.echo(f"LiteLLM configuration written to {path}")
 
 
 def _parse_latency(result: Any) -> float | None:

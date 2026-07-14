@@ -73,4 +73,34 @@ prompt_versions:
   latency: "1.0"
 
 # Sprint 4: benchmark version
-benchmark_version: "0.4.0"
+benchmark_version: "0.6.0"
+
+# Sprint 6: intelligent routing configuration
+# All keys are optional. Missing keys fall back to defaults.
+#routing:
+#  # Model selection strategy. Allowed: cost_aware, capability_first, health_first, round_robin
+#  strategy: cost_aware
+#
+#  # Hard cost ceiling per run before execution. 0.0 disables ceiling enforcement.
+#  cost_ceiling: 0.0
+#
+#  # Fallback controls
+#  fallback_enabled: false
+#  fallback_chain:
+#    - "ollama"
+#
+#  # Circuit breaker configuration
+#  circuit_breaker:
+#    enabled: true
+#    failure_rate_threshold: 0.5
+#    cooldown_seconds: 300
+#
+#  # Parallel execution. Must be explicitly enabled to activate.
+#  parallel:
+#    enabled: false
+#    max_workers: 4
+#
+#  # Selection preferences
+#  preference:
+#    prefer_free: false
+#    min_capability_score: 0.7

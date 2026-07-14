@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import sqlite3
+import threading
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
@@ -27,7 +28,7 @@ def _connect(db_path: Path | None = None) -> sqlite3.Connection:
     path = db_path or DB_PATH
     if not path.parent.exists():
         path.parent.mkdir(parents=True, exist_ok=True)
-    conn = sqlite3.connect(path)
+    conn = sqlite3.connect(path, check_same_thread=False)
     conn.row_factory = sqlite3.Row
     conn.execute("PRAGMA journal_mode=WAL")
     return conn
@@ -80,6 +81,39 @@ def init_db(conn: sqlite3.Connection | None = None) -> sqlite3.Connection:
     if owned:
         conn.commit()
     return conn
+
+
+class HistoryWriter:
+    _instance: HistoryWriter | None = None
+    _init_lock = threading.Lock()
+
+    def __init__(self, db_path: Path | None = None) -> None:
+        self.db_path = db_path or DB_PATH
+        self._conn = _connect(self.db_path)
+        self._lock = threading.Lock()
+        init_db(self._conn)
+
+    @classmethod
+    def instance(cls, db_path: Path | None = None) -> HistoryWriter:
+        if cls._instance is None:
+            with cls._init_lock:
+                if cls._instance is None:
+                    cls._instance = cls(db_path)
+        return cls._instance
+
+    @classmethod
+    def reset(cls) -> None:
+        with cls._init_lock:
+            if cls._instance is not None and cls._instance._conn is not None:
+                try:
+                    cls._instance._conn.close()
+                except Exception:
+                    pass
+            cls._instance = None
+
+    def save_run(self, results: list[BenchmarkResult], details: dict[str, Any] | None = None) -> int:
+        with self._lock:
+            return save_run(results, details=details, db_path=self.db_path, conn=self._conn)
 
 
 def save_run(results: list[BenchmarkResult], details: dict[str, Any] | None = None, db_path: Path | None = None, conn: sqlite3.Connection | None = None) -> int:
@@ -226,6 +260,6 @@ def load_run(run_id: int, db_path: Path | None = None, conn: sqlite3.Connection 
 def _json_default(value: Any) -> Any:
     if hasattr(value, "dict"):
         return value.dict()
-    if isinstance(value, (datetime, )):
+    if isinstance(value, (datetime,)):
         return value.isoformat()
     raise TypeError(f"Object of type {type(value).__name__} is not JSON serializable")

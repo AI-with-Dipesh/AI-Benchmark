@@ -30,8 +30,22 @@ class AppConfig:
         self.timeouts: TimeoutPolicy = TimeoutPolicy()
         self.cost: dict[str, Any] = {}
         self.prompt_versions: dict[str, str] = {}
-        self.benchmark_version: str = "0.4.0"
+        self.benchmark_version: str = self._default_version()
+        self.routing: dict[str, Any] = {}
         self._load()
+
+    @staticmethod
+    def _default_version() -> str:
+        try:
+            import tomllib
+            pyproject = Path(__file__).resolve().parent.parent.parent / "pyproject.toml"
+            if pyproject.exists():
+                with pyproject.open("rb") as f:
+                    data = tomllib.load(f)
+                return str(data.get("project", {}).get("version", "0.5.0"))
+        except Exception:
+            pass
+        return "0.5.0"
 
     def _load(self) -> None:
         providers_path = self.config_dir / "providers.yaml"
@@ -73,10 +87,72 @@ class AppConfig:
                     category_timeout_seconds=float(timeout_cfg.get("category", getattr(self.timeouts, "category_timeout_seconds", 120.0))),
                     connect_timeout_seconds=float(timeout_cfg.get("connect", getattr(self.timeouts, "connect_timeout_seconds", 10.0))),
                 )
+            self._load_routing(benchmark_cfg.get("routing", {}))
         except Exception as exc:
             raise ConfigError(f"Invalid benchmark config {benchmark_path}: {exc}") from exc
 
         self._resolve_api_keys()
+
+    def _load_routing(self, routing: dict[str, Any]) -> None:
+        if not isinstance(routing, dict):
+            raise ConfigError("routing configuration must be a mapping")
+        allowed_strategies = {"cost_aware", "capability_first", "health_first", "round_robin"}
+        strategy = routing.get("strategy", "cost_aware")
+        if strategy not in allowed_strategies:
+            raise ConfigError(f"Invalid routing.strategy '{strategy}'. Allowed: {sorted(allowed_strategies)}")
+        cost_ceiling = routing.get("cost_ceiling", 0.0)
+        try:
+            cost_ceiling = float(cost_ceiling)
+        except (TypeError, ValueError):
+            raise ConfigError("routing.cost_ceiling must be a number >= 0")
+        if cost_ceiling < 0:
+            raise ConfigError("routing.cost_ceiling must be >= 0")
+        fallback_enabled = bool(routing.get("fallback_enabled", False))
+        fallback_chain = routing.get("fallback_chain", [])
+        if not isinstance(fallback_chain, list):
+            raise ConfigError("routing.fallback_chain must be a list")
+        circuit = routing.get("circuit_breaker", {})
+        if not isinstance(circuit, dict):
+            raise ConfigError("routing.circuit_breaker must be a mapping")
+        failure_rate_threshold = circuit.get("failure_rate_threshold", 0.5)
+        try:
+            failure_rate_threshold = float(failure_rate_threshold)
+        except (TypeError, ValueError):
+            raise ConfigError("routing.circuit_breaker.failure_rate_threshold must be a float")
+        if not (0.0 <= failure_rate_threshold <= 1.0):
+            raise ConfigError("routing.circuit_breaker.failure_rate_threshold must be between 0 and 1")
+        cooldown_seconds = int(circuit.get("cooldown_seconds", 300))
+        parallel = routing.get("parallel", {})
+        if not isinstance(parallel, dict):
+            raise ConfigError("routing.parallel must be a mapping")
+        max_workers = int(parallel.get("max_workers", 4))
+        if max_workers < 1:
+            raise ConfigError("routing.parallel.max_workers must be >= 1")
+        preference = routing.get("preference", {})
+        if not isinstance(preference, dict):
+            raise ConfigError("routing.preference must be a mapping")
+        min_capability_score = float(preference.get("min_capability_score", 0.7))
+        if not (0.0 <= min_capability_score <= 1.0):
+            raise ConfigError("routing.preference.min_capability_score must be between 0 and 1")
+        self.routing = {
+            "strategy": strategy,
+            "cost_ceiling": cost_ceiling,
+            "fallback_enabled": fallback_enabled,
+            "fallback_chain": list(fallback_chain),
+            "circuit_breaker": {
+                "enabled": bool(circuit.get("enabled", True)),
+                "failure_rate_threshold": failure_rate_threshold,
+                "cooldown_seconds": cooldown_seconds,
+            },
+            "parallel": {
+                "enabled": bool(parallel.get("enabled", False)),
+                "max_workers": max_workers,
+            },
+            "preference": {
+                "prefer_free": bool(preference.get("prefer_free", False)),
+                "min_capability_score": min_capability_score,
+            },
+        }
 
     def _resolve_api_keys(self) -> None:
         """Resolve API keys from environment variables referenced in provider configs.
