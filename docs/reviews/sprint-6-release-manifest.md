@@ -3,8 +3,8 @@
 **Release Name:** Sprint 6 — Intelligent Routing & Automatic Model Selection  
 **Release Date:** 2026-07-14  
 **Version:** 0.6.0  
-**Git Commit:** 88ef71d (baseline) + Sprint 6 working tree  
-**Git Tag:** v0.6.0 (to be created)  
+**Git Commit:** f7fc936b07e09029ff3451f3fd57fca1d76ef114  
+**Git Tag:** v0.6.0  
 **Baseline:** v0.5.0  
 
 ## Supported Platforms
