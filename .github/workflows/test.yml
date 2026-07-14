@@ -23,4 +23,4 @@ jobs:
       - name: Lint
         run: ruff check aibenchmark/
       - name: Type check
-        run: mypy aibenchmark/
+        run: mypy -p aibenchmark
