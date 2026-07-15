@@ -1,5 +1,42 @@
 # Changelog
 
+## [1.0.0] - 2026-07-15
+
+### Added
+- Performance optimization: `ParallelExecutor` now preserves deterministic order with reduced scheduling overhead.
+- Memory optimization: SQLite connection lifecycle management with context manager support and bounded resource handling.
+- Production packaging: `pyproject.toml` versioned at `1.0.0` with optional extras and validated entry points.
+- Installation system: user guide, developer bootstrap scripts (`scripts/bootstrap.sh`, `scripts/bootstrap.bat`), and platform validation.
+- Documentation: quickstart, installation, troubleshooting, CLI reference, plugin SDK, and security documentation.
+- Plugin SDK: `plugin_api_version` enforcement, compatibility policy, and `benchmark plugin validate` command.
+- CI/CD improvements: docs accuracy validation, security scanning workflow (`security-scan.yml`), and reproducible build constraints.
+- Security hardening: typed input validators, YAML safe loader, JSON schema validation, dependency audit script, and security documentation.
+- Configuration migration: additive `schema_version` field with idempotent migration framework (`0.7.0` → `1.0.0`).
+- Release Candidate validation: architecture boundary checklist and RC validation helpers.
+
+### Changed
+- Engine hot paths maintain deterministic behavior while allowing bounded optimizations.
+- SQLite history helpers enforce strict ownership models with no cross-thread connection sharing.
+- Plugin contracts now include explicit API versioning with backward-compatible compatibility policy.
+- Release governance now mandates RC boundary checks and documentation accuracy validation.
+
+## [0.7.0] - 2026-07-15
+
+### Added
+- History-aware model ranking via `recent_category_performance()` read API.
+- Context-window feasibility check using provider-level `ProviderCapabilities.context_window`.
+- Fallback strategy configuration: `routing.fallback.strategy` supports `provider_first`, `model_first`, `hybrid`.
+- Model alternation under fallback policy in `BenchEngine`.
+- Deterministic tie-break keys in all `ModelSelector` strategies.
+- Release automation workflow: `.github/workflows/release.yml` with manual `workflow_dispatch`.
+- `docs/usage/routing.md` and `examples/benchmark.example.yaml`.
+
+### Changed
+- `ModelSelector` strategies populate `fallback_models` for the selected provider.
+- `ExecutionPolicy` enriches fallback topology and supports model-first fallback.
+- Engine fallback execution iterates provider alternation then model alternation.
+- `AppConfig._load_routing()` validates optional `routing.fallback.strategy` key.
+
 ## [0.6.0] - 2026-07-13
 
 ### Added

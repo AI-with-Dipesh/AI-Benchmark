@@ -184,6 +184,7 @@ def generate_statistics(run: list[BenchmarkResult], path: Path, **kwargs: object
 @register(PluginCategory.REPORTER, "validation")
 class ValidationReporter:
     plugin_name = "validation"
+    plugin_api_version = "1.0"
     plugin_category = "reporter"
 
     def generate(self, results: list[BenchmarkResult], path: Path, **kwargs: object) -> None:
@@ -193,6 +194,7 @@ class ValidationReporter:
 @register(PluginCategory.REPORTER, "calibration")
 class CalibrationReporter:
     plugin_name = "calibration"
+    plugin_api_version = "1.0"
     plugin_category = "reporter"
 
     def generate(self, results: list[BenchmarkResult], path: Path, **kwargs: object) -> None:
@@ -202,6 +204,7 @@ class CalibrationReporter:
 @register(PluginCategory.REPORTER, "reliability")
 class ReliabilityReporter:
     plugin_name = "reliability"
+    plugin_api_version = "1.0"
     plugin_category = "reporter"
 
     def generate(self, results: list[BenchmarkResult], path: Path, **kwargs: object) -> None:
@@ -211,6 +214,7 @@ class ReliabilityReporter:
 @register(PluginCategory.REPORTER, "statistics")
 class StatisticsReporter:
     plugin_name = "statistics"
+    plugin_api_version = "1.0"
     plugin_category = "reporter"
 
     def generate(self, results: list[BenchmarkResult], path: Path, **kwargs: object) -> None:
@@ -220,6 +224,7 @@ class StatisticsReporter:
 @register(PluginCategory.REPORTER, "tokens")
 class TokensReporter:
     plugin_name = "tokens"
+    plugin_api_version = "1.0"
     plugin_category = "reporter"
 
     def generate(self, results: list[BenchmarkResult], path: Path, **kwargs: object) -> None:
@@ -229,6 +234,7 @@ class TokensReporter:
 @register(PluginCategory.REPORTER, "cost")
 class CostReporter:
     plugin_name = "cost"
+    plugin_api_version = "1.0"
     plugin_category = "reporter"
 
     def generate(self, results: list[BenchmarkResult], path: Path, **kwargs: object) -> None:
@@ -238,6 +244,7 @@ class CostReporter:
 @register(PluginCategory.REPORTER, "metadata")
 class MetadataReporter:
     plugin_name = "metadata"
+    plugin_api_version = "1.0"
     plugin_category = "reporter"
 
     def generate(self, results: list[BenchmarkResult], path: Path, **kwargs: object) -> None:
@@ -247,6 +254,7 @@ class MetadataReporter:
 @register(PluginCategory.REPORTER, "governance")
 class GovernanceReporter:
     plugin_name = "governance"
+    plugin_api_version = "1.0"
     plugin_category = "reporter"
 
     def generate(self, results: list[BenchmarkResult], path: Path, **kwargs: object) -> None:

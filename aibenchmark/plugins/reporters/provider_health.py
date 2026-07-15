@@ -11,6 +11,7 @@ from aibenchmark.app.provider_registry import ProviderRegistry
 @register(PluginCategory.REPORTER, "provider_health")
 class ProviderHealthReporter:
     plugin_name = "provider_health"
+    plugin_api_version = "1.0"
     plugin_category = "reporter"
 
     def generate(self, results: list[BenchmarkResult], path: Path, **kwargs: Any) -> None:

@@ -13,6 +13,7 @@ from aibenchmark.app.models import (
     PluginCategory,
     ProviderType,
     ResponseObject,
+    RoutingPlan,
     Score,
 )
 from aibenchmark.app.plugin.registry import get_manager
@@ -65,6 +66,89 @@ class BenchEngine:
         if retry_count > 0:
             latency = result.metadata.get("latency_ms") or 0.0
             self._health_tracker.record(provider_name, latency, success, is_retry=True)
+
+    def _is_circuit_open(self, provider_name: str) -> bool:
+        try:
+            fb = self._get_strategy(PluginCategory.STRATEGY, "execution_policy")
+            if fb is not None:
+                ep = fb()
+                return ep.is_circuit_open(provider_name)
+        except Exception:
+            pass
+        return False
+
+    def _fallback_attempts(
+        self,
+        plan: RoutingPlan,
+        primary_provider: str,
+        primary_model: str,
+    ) -> list[tuple[str, str]]:
+        strategy = self.config.routing.get("fallback", {}).get("strategy", "provider_first")
+        providers = [p for p in plan.fallback_providers if p != primary_provider]
+        models = list(plan.fallback_models)
+        attempts: list[tuple[str, str]] = []
+        if strategy == "provider_first":
+            for p in providers:
+                attempts.append((p, primary_model))
+            for p in providers:
+                for m in models:
+                    attempts.append((p, m))
+        elif strategy == "model_first":
+            for m in models:
+                attempts.append((primary_provider, m))
+            for p in providers:
+                attempts.append((p, primary_model))
+            for p in providers:
+                for m in models:
+                    attempts.append((p, m))
+        elif strategy == "hybrid":
+            seen: set[tuple[str, str]] = set()
+            max_len = max(len(providers), len(models))
+            for i in range(max_len):
+                if i < len(providers):
+                    attempts.append((providers[i], primary_model))
+                    seen.add((providers[i], primary_model))
+                if i < len(models):
+                    attempts.append((primary_provider, models[i]))
+                    seen.add((primary_provider, models[i]))
+            for p in providers:
+                for m in models:
+                    if (p, m) not in seen:
+                        attempts.append((p, m))
+        else:
+            for p in providers:
+                attempts.append((p, primary_model))
+        return attempts
+
+    def _execute_fallback(
+        self,
+        plan: RoutingPlan | dict[str, Any],
+        primary_provider: str,
+        primary_model: str,
+        benchmark_name_enum: Any,
+        messages: list[dict[str, Any]],
+        kwargs: dict[str, Any],
+        fallback_depth: int,
+    ) -> BenchmarkResult | None:
+        routing_plan = plan if isinstance(plan, RoutingPlan) else RoutingPlan(**plan)
+        attempts = self._fallback_attempts(routing_plan, primary_provider, primary_model)
+        for fb_provider, fb_model in attempts:
+            if fb_provider == primary_provider and fb_model == primary_model:
+                continue
+            if self._is_circuit_open(fb_provider):
+                continue
+            try:
+                return self.run_benchmark(
+                    fb_provider,
+                    fb_model,
+                    benchmark_name_enum,
+                    messages,
+                    _fallback_depth=fallback_depth + 1,
+                    **kwargs,
+                )
+            except Exception:
+                continue
+        return None
 
     def list_providers(self) -> list[str]:
         return self.plugins.list_names(PluginCategory.PROVIDER)
@@ -247,21 +331,17 @@ class BenchEngine:
                         "fallback_providers": self.config.routing.get("fallback_chain", []),
                     }
                 )
-                for fb_provider in plan.get("fallback_providers", []):
-                    if fb_provider == provider_name:
-                        continue
-                    try:
-                        fb = self._get_strategy(PluginCategory.STRATEGY, "execution_policy")
-                        if fb is not None:
-                            ep = fb()
-                            if ep.is_circuit_open(fb_provider):
-                                continue
-                    except Exception:
-                        pass
-                    try:
-                        return self.run_benchmark(fb_provider, model, benchmark_name_enum, messages, _fallback_depth=1, **kwargs)
-                    except Exception:
-                        continue
+                fb_result = self._execute_fallback(
+                    plan,
+                    provider_name,
+                    model,
+                    benchmark_name_enum,
+                    messages,
+                    kwargs,
+                    _fallback_depth,
+                )
+                if fb_result is not None:
+                    return fb_result
             return result
 
         try:

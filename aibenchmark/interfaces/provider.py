@@ -116,19 +116,27 @@ class BaseProvider(ABC):
     @staticmethod
     def _parse_rate_limit(headers: dict[str, str]) -> RateLimitStatus:
         rl = RateLimitStatus()
-        for key in ("x-ratelimit-remaining", "x-ratelimit-limit", "x-ratelimit-reset", "retry-after", "x-ms-ratelimit-remaining"):
+        for key in (
+            "x-ratelimit-remaining",
+            "x-ratelimit-limit",
+            "x-ratelimit-reset",
+            "retry-after",
+            "x-ms-ratelimit-remaining",
+        ):
             val = headers.get(key, "").strip()
             if not val:
                 continue
             try:
-                if "remaining" in key.lower():
+                if key == "x-ratelimit-remaining":
                     rl = replace(rl, remaining=int(val))
-                elif "limit" in key.lower():
+                elif key == "x-ratelimit-limit":
                     rl = replace(rl, limit=int(val))
-                elif "reset" in key.lower():
+                elif key == "x-ratelimit-reset":
                     rl = replace(rl, reset_seconds=int(val))
                 elif key == "retry-after":
                     rl = replace(rl, retry_after=int(val))
+                elif key == "x-ms-ratelimit-remaining":
+                    rl = replace(rl, remaining=int(val))
             except ValueError:
                 pass
         return rl

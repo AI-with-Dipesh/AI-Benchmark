@@ -10,6 +10,7 @@ class LatencyBenchmark(BaseBenchmark):
     name = BenchmarkName.LATENCY
     plugin_name = "latency"
 
+    plugin_api_version = "1.0"
     def run(self, response, **kwargs):
         latency = response.latency_ms or float("inf")
         normalized = max(0.0, min(1.0, 1.0 - (latency / 5000.0)))

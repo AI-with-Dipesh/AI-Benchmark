@@ -11,6 +11,7 @@ class DebuggingBenchmark(BaseBenchmark):
     name = BenchmarkName.DEBUGGING
     plugin_name = "debugging"
 
+    plugin_api_version = "1.0"
     def run(self, response, **kwargs):
         prompt = kwargs.get("prompt", {})
         evaluator = DebuggingEvaluator(self.name.value, prompt, response.content or "")

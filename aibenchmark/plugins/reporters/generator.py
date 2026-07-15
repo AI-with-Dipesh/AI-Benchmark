@@ -9,6 +9,7 @@ from aibenchmark.app.plugin.registry import register
 @register(PluginCategory.REPORTER, "json")
 class JsonReporter:
     plugin_name = "json"
+    plugin_api_version = "1.0"
     plugin_category = "reporter"
 
     def generate(self, results: list[BenchmarkResult], path: Path, **kwargs) -> None:
@@ -42,6 +43,7 @@ class JsonReporter:
 @register(PluginCategory.REPORTER, "md")
 class MarkdownReporter:
     plugin_name = "md"
+    plugin_api_version = "1.0"
     plugin_category = "reporter"
 
     def generate(self, results: list[BenchmarkResult], path: Path, **kwargs) -> None:
@@ -62,6 +64,7 @@ class MarkdownReporter:
 @register(PluginCategory.REPORTER, "csv")
 class CsvReporter:
     plugin_name = "csv"
+    plugin_api_version = "1.0"
     plugin_category = "reporter"
 
     def generate(self, results: list[BenchmarkResult], path: Path, **kwargs) -> None:

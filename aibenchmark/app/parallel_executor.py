@@ -16,14 +16,16 @@ class ParallelExecutor:
         jobs = list(zip(*iterables))
         results: list[Any] = []
         with ThreadPoolExecutor(max_workers=self.max_workers) as executor:
-            futures = {executor.submit(func, *args): idx for idx, args in enumerate(jobs)}
-            for future in as_completed(futures):
-                idx = futures[future]
-                try:
-                    result = future.result()
-                except Exception as exc:
-                    logger.debug("Parallel job %d failed: %s", idx, exc)
-                    result = None
-                results.append((idx, result))
-        results.sort(key=lambda item: item[0])
-        return [r for _, r in results]
+            futures = executor.map(
+                lambda args: _parallel_job(func, args), jobs, timeout=None
+            )
+            results = list(futures)
+        return results
+
+
+def _parallel_job(func: Callable[..., Any], args: tuple[Any, ...]) -> Any:
+    try:
+        return func(*args)
+    except Exception as exc:
+        logger.debug("Parallel job failed: %s", exc)
+        return None

@@ -14,6 +14,7 @@ class HuggingFaceProvider(BaseProvider):
     provider_type = ProviderType.HUGGINGFACE
     plugin_name = "huggingface"
 
+    plugin_api_version = "1.0"
     def __init__(self, api_key: str, base_url: str = "https://api-inference.huggingface.co/v1", **kwargs):
         super().__init__(api_key, base_url, **kwargs)
 

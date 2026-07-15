@@ -14,6 +14,7 @@ class NVIDIAProvider(BaseProvider):
     provider_type = ProviderType.NVIDIA
     plugin_name = "nvidia"
 
+    plugin_api_version = "1.0"
     def __init__(self, api_key: str, base_url: str = "https://integrate.api.nvidia.com/v1", **kwargs):
         super().__init__(api_key, base_url, **kwargs)
 

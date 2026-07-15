@@ -17,6 +17,7 @@ logger = logging.getLogger(__name__)
 @register(PluginCategory.STRATEGY, "execution_policy")
 class ExecutionPolicy(BaseStrategy):
     plugin_name = "execution_policy"
+    plugin_api_version = "1.0"
     plugin_category = "strategy"
     plugin_priority = 100
 
@@ -46,6 +47,7 @@ class ExecutionPolicy(BaseStrategy):
         self._cooldowns[provider_name] = time.time()
 
     def apply(self, primary_plan: RoutingPlan) -> RoutingPlan:
+        strategy = self.config.routing.get("fallback", {}).get("strategy", "provider_first")
         chain = self.config.routing.get("fallback_chain", [])
         if not self.config.routing.get("fallback_enabled", False):
             return primary_plan
@@ -60,13 +62,20 @@ class ExecutionPolicy(BaseStrategy):
             if self.is_circuit_open(provider_name):
                 continue
             available_fallbacks.append(provider_name)
+        fallback_models = list(primary_plan.fallback_models)
+        if strategy in {"model_first", "hybrid"} and not fallback_models:
+            try:
+                models = self._registry.list_models(primary_plan.provider)
+                fallback_models = [m for m in models if m != primary_plan.model][:3]
+            except Exception:
+                pass
         return RoutingPlan(
             provider=primary_plan.provider,
             model=primary_plan.model,
             estimated_cost=primary_plan.estimated_cost,
             rationale=primary_plan.rationale,
             fallback_providers=available_fallbacks,
-            fallback_models=primary_plan.fallback_models,
+            fallback_models=fallback_models,
         )
 
     def next_provider(self, plan: RoutingPlan) -> str | None:

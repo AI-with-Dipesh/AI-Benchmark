@@ -111,8 +111,39 @@ class HistoryWriter:
                     pass
             cls._instance = None
 
+    @classmethod
+    def _owns_instance(cls) -> bool:
+        return cls._instance is not None and cls._instance._conn is not None
+
+    def close(self) -> None:
+        """Release owned connection. Idempotent."""
+        with self._lock:
+            if self._conn is not None:
+                try:
+                    self._conn.close()
+                except Exception:
+                    pass
+                self._conn = None
+
+    def __enter__(self) -> HistoryWriter:
+        return self
+
+    def __exit__(self, exc_type: Any, exc_val: Any, exc_tb: Any) -> None:
+        self.close()
+
+    def __del__(self) -> None:
+        if self._conn is not None:
+            try:
+                self._conn.close()
+            except Exception:
+                pass
+            self._conn = None
+
     def save_run(self, results: list[BenchmarkResult], details: dict[str, Any] | None = None) -> int:
         with self._lock:
+            if self._conn is None:
+                self._conn = _connect(self.db_path)
+                init_db(self._conn)
             return save_run(results, details=details, db_path=self.db_path, conn=self._conn)
 
 
@@ -261,3 +292,94 @@ def _json_default(value: Any) -> Any:
     if isinstance(value, (datetime,)):
         return value.isoformat()
     raise TypeError(f"Object of type {type(value).__name__} is not JSON serializable")
+
+
+def recent_category_performance(
+    db_path: Path | None = None,
+    category: str | None = None,
+    benchmark_name: str | None = None,
+    limit: int = 20,
+) -> dict[str, dict[str, Any]]:
+    """Return recent category/model performance aggregates.
+
+    Keys are ``provider:model`` maps. Each value contains normalized score,
+    run count, latest timestamp, success proxy, and estimated cost.
+    """
+    path = db_path or DB_PATH
+    owned = db_path is None
+    conn = _connect(path)
+    try:
+        init_db(conn)
+        where: list[str] = []
+        params: list[Any] = []
+        if benchmark_name:
+            where.append("bs.benchmark = ?")
+            params.append(benchmark_name)
+        # Category-level filtering is not supported by current schema without a
+        # benchmark->category lookup table; defer category filtering to callers.
+        if where:
+            query = (
+                "SELECT rs.provider, rs.model, AVG(bs.normalized) as avg_normalized, "
+                "COUNT(*) as run_count, MAX(rs.timestamp) as latest "
+                "FROM runs rs "
+                "JOIN benchmark_scores bs ON rs.run_id = bs.run_id "
+                "WHERE " + " AND ".join(where) + " "
+                "GROUP BY rs.provider, rs.model ORDER BY latest DESC LIMIT ?"
+            )
+        else:
+            query = (
+                "SELECT rs.provider, rs.model, AVG(bs.normalized) as avg_normalized, "
+                "COUNT(*) as run_count, MAX(rs.timestamp) as latest "
+                "FROM runs rs "
+                "JOIN benchmark_scores bs ON rs.run_id = bs.run_id "
+                "GROUP BY rs.provider, rs.model ORDER BY latest DESC LIMIT ?"
+            )
+        params.append(limit)
+        rows = conn.execute(query, params).fetchall()
+        result: dict[str, dict[str, Any]] = {}
+        for row in rows:
+            key = f"{row['provider']}:{row['model']}"
+            avg_norm = float(row["avg_normalized"] or 0.0)
+            success_rate = 1.0 if avg_norm > 0 else 0.0
+            result[key] = {
+                "normalized": avg_norm,
+                "run_count": row["run_count"],
+                "latest": row["latest"],
+                "success_rate": success_rate,
+                "estimated_cost": 0.0,
+            }
+        try:
+            from aibenchmark.app.config import AppConfig
+
+            cfg = AppConfig()
+            for key, entry in result.items():
+                provider, model = key.split(":", 1)
+                try:
+                    pp, cp = cfg.model_cost(provider, model)
+                    entry["estimated_cost"] = (8192 / 1000.0) * pp + (1024 / 1000.0) * cp
+                except Exception:
+                    pass
+        except Exception:
+            pass
+        return result
+    finally:
+        if owned and conn is not None:
+            conn.close()
+
+
+def recent_runs(db_path: Path | None = None, limit: int = 5) -> list[dict[str, Any]]:
+    """Return lightweight summaries of recent runs."""
+    path = db_path or DB_PATH
+    owned = db_path is None
+    conn = _connect(path)
+    try:
+        init_db(conn)
+        rows = conn.execute(
+            "SELECT run_id, timestamp, provider, model, overall, benchmark_count "
+            "FROM runs ORDER BY timestamp DESC LIMIT ?",
+            (limit,),
+        ).fetchall()
+        return [dict(row) for row in rows]
+    finally:
+        if owned and conn is not None:
+            conn.close()

@@ -46,7 +46,7 @@ Production-grade LLM benchmarking for AI engineering tasks.
   - Provider certification (platinum/gold/silver/bronze).
   - Provider comparison reports (capabilities, latency, reliability, cost, token efficiency).
   - CLI commands: `providers`, `provider info`, `provider health`, `provider compare`, `models`, `capabilities`, `auth`, `discover`, `provider validate`, `provider certify`.
-- Sprint 6 Intelligent Routing & Automatic Model Selection:
+- Sprint 6: Intelligent Routing & Automatic Model Selection
   - Strategy plugin framework operational via `PluginCategory.STRATEGY`.
   - Automatic model selection strategies: `cost_aware`, `capability_first`, `health_first`, `round_robin`.
   - LiteLLM-style routing configuration generation.
@@ -56,6 +56,13 @@ Production-grade LLM benchmarking for AI engineering tasks.
   - New CLI commands: `route`, `select`, `fallback`, `optimize`, `parallel`, `config generate-litellm`.
   - Thread-safe `HealthTracker` and `HistoryWriter` for parallel execution safety.
   - CI workflow with test, lint, and type-check.
+- Sprint 7: History-Driven Selection, Context-Window Safety, Model Alternation, Release Automation
+  - History-aware model ranking using SQLite run history.
+  - Context-window feasibility checks before execution.
+  - Configurable fallback ordering: `provider_first`, `model_first`, `hybrid`.
+  - Model alternation under fallback policy.
+  - Release automation workflow with draft release generation.
+  - Deterministic routing tie-break contract.
 - CLI:
   - `benchmark run main` executes all configured benchmarks.
   - `benchmark leaderboard generate` builds historical leaderboards.
@@ -121,98 +128,40 @@ aibenchmark/
 
 ## Installation
 
+See [docs/installation.md](docs/installation.md) for the full installation guide, including developer bootstrap and optional extras.
+
+Quick start:
+
 ```bash
 python -m venv .venv
 source .venv/bin/activate
-pip install -e .
+pip install -e ".[dev]"
 ```
 
 ## Requirements
 
-- Python 3.13+
+- Python 3.13 is the currently tested and officially supported baseline.
 - Dependencies: httpx, pydantic, pyyaml, click, python-dotenv
-- Dev: pytest, mypy, ruff, pytest-cov
+- Dev: pytest, mypy, ruff, pytest-cov, sphinx
 
-## Usage
+## Quick Start
 
-Configure environment variables from `.env.example`:
-
-```bash
-cp .env.example .env
-# fill provider API keys, e.g. OLLAMA_API_KEY, NVIDIA_API_KEY
-```
-
-Run all benchmarks for the configured default provider and model:
+See [docs/quickstart.md](docs/quickstart.md) for a step-by-step walkthrough.
 
 ```bash
 benchmark run main
+benchmark discover
 ```
 
-Run specific benchmarks:
+## Troubleshooting
 
-```bash
-benchmark run ollama -m llama3 --benchmark coding --benchmark reasoning
-```
+See [docs/troubleshooting.md](docs/troubleshooting.md).
 
-### Analytics Commands
+## Plugin SDK
 
-```bash
-# Show leaderboard from latest run
-benchmark leaderboard generate --runs 1 --out history
+See [docs/plugins/sdk.md](docs/plugins/sdk.md) and [docs/plugins/compatibility.md](docs/plugins/compatibility.md).
 
-# Recommend best model per category
-benchmark recommend --runs 1 --out history
-
-# Assemble AI engineering team
-benchmark team --runs 1 --out history
-
-# Compare latest run against an earlier run
-benchmark compare --against 2 --out history
-
-# Show trends across latest N runs
-benchmark trends --runs 5 --out history
-
-# Explain recommendations
-benchmark explain --runs 1
-```
-
-## CLI Commands
-
-- `benchmark run <provider> -m <model> [-b <benchmark>...]` Run selected or all benchmarks.
-- `benchmark run main` Run all benchmarks from `configs/benchmark.yaml` defaults.
-- `benchmark providers` List all registered providers.
-- `benchmark provider list` Alias for `benchmark providers`.
-- `benchmark provider info <provider>` Print detailed provider info and metadata.
-- `benchmark provider health` Show provider health status.
-- `benchmark provider compare` Compare providers and show ranking.
-- `benchmark provider validate` Run full provider validation and generate a report.
-- `benchmark provider certify` Generate provider certification report.
-- `benchmark models <provider>` List models for a provider.
-- `benchmark capabilities` Show provider capabilities.
-- `benchmark auth` Validate authentication credentials.
-- `benchmark discover` Discover and list all plugins.
-- `benchmark leaderboard generate` Generate leaderboard report from persisted history.
-- `benchmark recommend` Recommend best model per category based on history.
-- `benchmark team` Build an AI engineering team from latest history.
-- `benchmark compare` Compare latest run against N-th latest run.
-- `benchmark trends` Show trends across the latest N runs.
-- `benchmark explain` Print human-readable recommendation explanation to stdout.
-- `benchmark validate` Validate benchmark results and scoring integrity.
-- `benchmark calibrate` Run benchmark calibration and generate report.
-- `benchmark stats` Generate statistical summary for latest runs.
-- `benchmark reliability` Generate reliability metrics report.
-- `benchmark reproduce` Print reproducibility metadata for latest run.
-- `benchmark cost` Generate cost estimation report.
-- `benchmark tokens` Generate token usage report.
-- `benchmark governance` Generate governance/recommendation explainability report.
-- `benchmark route [benchmark]` Show routing plan for a benchmark without executing.
-- `benchmark select <benchmark> [--provider] [--model]` Automatic model selection.
-- `benchmark fallback <provider> [model]` Test fallback chain.
-- `benchmark optimize [-b benchmark...] [--provider]` Cost-optimized execution preview.
-- `benchmark parallel -p <provider> [-b benchmark...]` Multi-provider parallel execution.
-- `benchmark config generate-litellm` Generate LiteLLM configuration.
-
-## Configuration
+## Reports
 
 `configs/benchmark.yaml`
 
@@ -224,10 +173,33 @@ benchmark explain --runs 1
 - `cost:` per-provider/model token pricing.
 - `prompt_versions:` version string per benchmark category.
 - `benchmark_version:` overall benchmark suite version.
+- `routing:` strategy, cost ceiling, fallback controls, circuit breaker, parallel execution, selection preferences.
+  - `fallback.strategy:` fallback ordering: `provider_first`, `model_first`, `hybrid`. Defaults to `provider_first`.
+- `routing.fallback_chain:` ordered providers to attempt after primary provider failure.
 
 `configs/providers.yaml`
 
 - Provider-specific settings: name, api_key, api_key_env, base_url, models, default.
+
+### Routing
+
+Use `benchmark route` to preview routing plans without executing:
+
+```bash
+benchmark route coding
+benchmark select coding --provider ollama
+benchmark fallback ollama --model llama3
+```
+
+History-driven selection uses SQLite run history to rank candidates. Context-window safety checks skip providers whose context limits cannot accommodate the estimated prompt. Fallback ordering is configurable via `routing.fallback.strategy`.
+
+### Release Automation
+
+The repository includes `.github/workflows/release.yml` for draft release generation.
+
+- Trigger: manual `workflow_dispatch` with tag input.
+- Behavior: runs tests, generates artifact bundle, creates draft release.
+- Limitation: does not auto-publish; manager approval required.
 
 ## Example Benchmark Output
 
@@ -343,9 +315,10 @@ benchmark explain --runs 1
 │   │   ├── __init__.py
 │   │   ├── registry.py
 │   │   └── manager.py
-│   ├── execution_policy.py           - Sprint 6 fallback/circuit-breaker policy
-│   ├── model_selector.py             - Sprint 6 automatic model selection
-│   ├── parallel_executor.py          - Sprint 6 parallel execution coordinator
+│   ├── execution_policy.py           - Fallback/circuit-breaker policy, fallback strategy ordering
+│   ├── model_selector.py             - Automatic model selection with history ranking and context checks
+│   ├── parallel_executor.py          - Parallel execution coordinator
+│   ├── history.py                    - SQLite persistence: init_db, save_run, load_latest, recent_category_performance
 │   └── tests/                       - pytest suite
 ├── configs/
 │   ├── benchmark.yaml
@@ -378,6 +351,7 @@ benchmark explain --runs 1
 - Sprint 4: Validation, calibration, reliability, token accounting, retry/timeout policies, metadata
 - Sprint 5: Universal Provider Platform
 - Sprint 6: Intelligent Routing & Automatic Model Selection
+- Sprint 7: History-Driven Selection, Context-Window Safety, Model Alternation, Release Automation
 
 ## Operational Notes
 
@@ -398,7 +372,7 @@ Cost is estimated from configured token prices in `configs/benchmark.yaml` under
 
 ## Version
 
-Current version: `0.6.0`
+Current version: `1.0.0`
 
 ## Sprint History
 

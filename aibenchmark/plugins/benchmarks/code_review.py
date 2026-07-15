@@ -11,6 +11,7 @@ class CodeReviewBenchmark(BaseBenchmark):
     name = BenchmarkName.CODE_REVIEW
     plugin_name = "code_review"
 
+    plugin_api_version = "1.0"
     def run(self, response, **kwargs):
         prompt = kwargs.get("prompt", {})
         evaluator = CodeReviewEvaluator(self.name.value, prompt, response.content or "")

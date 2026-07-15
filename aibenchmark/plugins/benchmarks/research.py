@@ -11,6 +11,7 @@ class ResearchBenchmark(BaseBenchmark):
     name = BenchmarkName.RESEARCH
     plugin_name = "research"
 
+    plugin_api_version = "1.0"
     def run(self, response, **kwargs):
         prompt = kwargs.get("prompt", {})
         evaluator = ResearchEvaluator(self.name.value, prompt, response.content or "")

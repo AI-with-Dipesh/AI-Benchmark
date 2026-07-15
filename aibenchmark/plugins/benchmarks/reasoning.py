@@ -11,6 +11,7 @@ class ReasoningBenchmark(BaseBenchmark):
     name = BenchmarkName.REASONING
     plugin_name = "reasoning"
 
+    plugin_api_version = "1.0"
     def run(self, response, **kwargs):
         prompt = kwargs.get("prompt", {})
         evaluator = ReasoningEvaluator(self.name.value, prompt, response.content or "")

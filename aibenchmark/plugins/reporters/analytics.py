@@ -157,6 +157,7 @@ def _parse_latency(result: Any) -> float | None:
 @register(PluginCategory.REPORTER, "leaderboard")
 class LeaderboardReporter:
     plugin_name = "leaderboard"
+    plugin_api_version = "1.0"
     plugin_category = "reporter"
 
     def generate(self, results: list[BenchmarkResult], path: Path, **kwargs: object) -> None:
@@ -166,6 +167,7 @@ class LeaderboardReporter:
 @register(PluginCategory.REPORTER, "recommendations")
 class RecommendationsReporter:
     plugin_name = "recommendations"
+    plugin_api_version = "1.0"
     plugin_category = "reporter"
 
     def generate(self, results: list[BenchmarkResult], path: Path, **kwargs: object) -> None:
@@ -175,6 +177,7 @@ class RecommendationsReporter:
 @register(PluginCategory.REPORTER, "team")
 class TeamReporter:
     plugin_name = "team"
+    plugin_api_version = "1.0"
     plugin_category = "reporter"
 
     def generate(self, results: list[BenchmarkResult], path: Path, **kwargs: object) -> None:
@@ -184,6 +187,7 @@ class TeamReporter:
 @register(PluginCategory.REPORTER, "compare")
 class CompareReporter:
     plugin_name = "compare"
+    plugin_api_version = "1.0"
     plugin_category = "reporter"
 
     def generate(self, results: list[BenchmarkResult], path: Path, **kwargs: object) -> None:
@@ -193,6 +197,7 @@ class CompareReporter:
 @register(PluginCategory.REPORTER, "trends")
 class TrendsReporter:
     plugin_name = "trends"
+    plugin_api_version = "1.0"
     plugin_category = "reporter"
 
     def generate(self, results: list[BenchmarkResult], path: Path, **kwargs: object) -> None:

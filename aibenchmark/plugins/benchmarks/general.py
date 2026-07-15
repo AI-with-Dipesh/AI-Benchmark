@@ -11,6 +11,7 @@ class GeneralBenchmark(BaseBenchmark):
     name = BenchmarkName.GENERAL
     plugin_name = "general"
 
+    plugin_api_version = "1.0"
     def run(self, response, **kwargs):
         prompt = kwargs.get("prompt", {})
         evaluator = GeneralEvaluator(self.name.value, prompt, response.content or "")

@@ -12,6 +12,7 @@ from aibenchmark.app.cross_provider import CrossProviderBenchmark
 @register(PluginCategory.REPORTER, "provider_comparison")
 class ProviderComparisonReporter:
     plugin_name = "provider_comparison"
+    plugin_api_version = "1.0"
     plugin_category = "reporter"
 
     def generate(self, results: list[BenchmarkResult], path: Path, **kwargs: Any) -> None:

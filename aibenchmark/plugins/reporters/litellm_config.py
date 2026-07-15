@@ -27,6 +27,7 @@ def _model_entry(provider_name: str, model_id: str, api_base: str, api_key: str)
 @register(PluginCategory.REPORTER, "litellm_config")
 class LiteLLMConfigReporter:
     plugin_name = "litellm_config"
+    plugin_api_version = "1.0"
     plugin_category = "reporter"
 
     def generate(self, results: list[BenchmarkResult], path: Path, **kwargs: object) -> None:

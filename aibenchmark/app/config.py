@@ -59,7 +59,9 @@ class AppConfig:
         try:
             with providers_path.open("r", encoding="utf-8") as f:
                 self.providers = yaml.safe_load(f) or {}
-            self.provider_plugins = self.providers.pop("provider_plugins", {}) if isinstance(self.providers, dict) else {}
+            if not isinstance(self.providers, dict):
+                raise ConfigError("Invalid providers config")
+            self.provider_plugins = self.providers.pop("provider_plugins", {})
         except Exception as exc:
             raise ConfigError(f"Invalid providers config {providers_path}: {exc}") from exc
 
@@ -96,6 +98,7 @@ class AppConfig:
     def _load_routing(self, routing: dict[str, Any]) -> None:
         if not isinstance(routing, dict):
             raise ConfigError("routing configuration must be a mapping")
+        self.schema_version = str(routing.get("schema_version", "1.0"))
         allowed_strategies = {"cost_aware", "capability_first", "health_first", "round_robin"}
         strategy = routing.get("strategy", "cost_aware")
         if strategy not in allowed_strategies:
@@ -134,7 +137,14 @@ class AppConfig:
         min_capability_score = float(preference.get("min_capability_score", 0.7))
         if not (0.0 <= min_capability_score <= 1.0):
             raise ConfigError("routing.preference.min_capability_score must be between 0 and 1")
+        fallback = routing.get("fallback", {})
+        if not isinstance(fallback, dict):
+            raise ConfigError("routing.fallback must be a mapping")
+        fallback_strategy = fallback.get("strategy", "provider_first")
+        if fallback_strategy not in {"provider_first", "model_first", "hybrid"}:
+            raise ConfigError("routing.fallback.strategy must be one of provider_first, model_first, hybrid")
         self.routing = {
+            "schema_version": self.schema_version,
             "strategy": strategy,
             "cost_ceiling": cost_ceiling,
             "fallback_enabled": fallback_enabled,
@@ -151,6 +161,9 @@ class AppConfig:
             "preference": {
                 "prefer_free": bool(preference.get("prefer_free", False)),
                 "min_capability_score": min_capability_score,
+            },
+            "fallback": {
+                "strategy": fallback_strategy,
             },
         }
 

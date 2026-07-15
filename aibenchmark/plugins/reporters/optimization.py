@@ -10,6 +10,7 @@ from aibenchmark.app.provider_registry import ProviderRegistry
 @register(PluginCategory.REPORTER, "optimization")
 class OptimizationReporter:
     plugin_name = "optimization"
+    plugin_api_version = "1.0"
     plugin_category = "reporter"
 
     def generate(self, results: list[BenchmarkResult], path: Path, **kwargs: object) -> None:

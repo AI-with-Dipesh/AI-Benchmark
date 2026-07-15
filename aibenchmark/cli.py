@@ -325,6 +325,55 @@ def discover():
         click.echo(f"  {p}")
 
 
+@cli.group("plugin")
+def plugin_group():
+    """Plugin management commands."""
+    pass
+
+
+@plugin_group.command("validate")
+def plugin_validate():
+    """Validate all plugin metadata and API version compatibility."""
+    import aibenchmark.plugins  # noqa: F401
+    from aibenchmark.app.plugin.registry import validate_all_plugins
+
+    results = validate_all_plugins()
+    invalid = [r for r in results if not r["valid"]]
+    click.echo(f"Validated {len(results)} plugins.")
+    if invalid:
+        click.echo(f"\n{len(invalid)} plugin(s) with issues:")
+        for r in invalid:
+            click.echo(f"  [{r['category']}] {r['name']}:")
+            for issue in r.get("issues", []):
+                click.echo(f"    - {issue}")
+    else:
+        click.echo("All plugins are valid.")
+
+
+@plugin_group.command("list")
+def plugin_list():
+    """List plugins by category."""
+    import aibenchmark.plugins  # noqa: F401
+    from aibenchmark.app.plugin.registry import get_manager
+
+    mgr = get_manager()
+    click.echo("Providers:")
+    for p in mgr.list_names(PluginCategory.PROVIDER):
+        click.echo(f"  {p}")
+    click.echo("Benchmarks:")
+    for p in mgr.list_names(PluginCategory.BENCHMARK):
+        click.echo(f"  {p}")
+    click.echo("Reporters:")
+    for p in mgr.list_names(PluginCategory.REPORTER):
+        click.echo(f"  {p}")
+    click.echo("Evaluators:")
+    for p in mgr.list_names(PluginCategory.EVALUATOR):
+        click.echo(f"  {p}")
+    click.echo("Strategies:")
+    for p in mgr.list_names(PluginCategory.STRATEGY):
+        click.echo(f"  {p}")
+
+
 def main() -> None:
     cli()
 

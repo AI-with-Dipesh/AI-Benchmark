@@ -11,6 +11,7 @@ class JsonBenchmark(BaseBenchmark):
     name = BenchmarkName.JSON
     plugin_name = "json"
 
+    plugin_api_version = "1.0"
     def run(self, response, **kwargs):
         prompt = kwargs.get("prompt", {})
         evaluator = JsonEvaluator(self.name.value, prompt, response.content or "")

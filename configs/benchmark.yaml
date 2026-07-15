@@ -73,7 +73,7 @@ prompt_versions:
   latency: "1.0"
 
 # Sprint 4: benchmark version
-benchmark_version: "0.6.0"
+benchmark_version: "1.0.0"
 
 # Sprint 6: intelligent routing configuration
 # All keys are optional. Missing keys fall back to defaults.
@@ -104,3 +104,8 @@ benchmark_version: "0.6.0"
 #  preference:
 #    prefer_free: false
 #    min_capability_score: 0.7
+#
+#  # Fallback ordering strategy. Allowed: provider_first, model_first, hybrid
+#  # Default: provider_first
+#  fallback:
+#    strategy: provider_first

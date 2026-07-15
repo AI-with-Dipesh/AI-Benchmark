@@ -1,0 +1,82 @@
+name: Security Scan
+
+on:
+  push:
+    branches: ["master", "main"]
+  pull_request:
+    branches: ["master", "main"]
+  schedule:
+    - cron: "0 0 * * 1"  # Weekly on Monday
+
+permissions:
+  contents: read
+  security-events: write
+
+jobs:
+  security-scan:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - name: Install security scanning tools
+        run: |
+          python -m pip install --upgrade pip
+          pip install bandit safety semgrep
+      - name: Run Bandit security scan
+        run: bandit -r aibenchmark/ -ll -f json -o bandit-report.json || true
+      - name: Upload Bandit SARIF
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: bandit-report.json
+          category: bandit
+      - name: Run Safety dependency audit
+        run: |
+          safety check --json -o safety-report.json || true
+      - name: Run Semgrep
+        run: semgrep --error --config auto aibenchmark/ || true
+      - name: Enforce critical/high failure threshold
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import json
+          issues = []
+          for name in ["bandit-report.json", "safety-report.json"]:
+              p = Path(name)
+              if not p.exists():
+                  continue
+              data = json.loads(p.read_text())
+              if not isinstance(data, list):
+                  data = data.get("vulnerabilities", []) if isinstance(data, dict) else []
+              for item in data:
+                  sev = str(item.get("issue_severity", item.get("severity", ""))).upper()
+                  if sev in {"HIGH", "CRITICAL"}:
+                      issues.append(f"{name}: {item.get('issue_text', item.get('advisory', ''))} [{sev}]")
+          if issues:
+              print("Critical/High security findings detected:")
+              print("\n".join(issues))
+              raise SystemExit(1)
+          print("No critical/high security findings.")
+          PY
+      - name: Check for hardcoded secrets
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import re
+          secret_patterns = [
+              r"AIza[0-9A-Za-z\\-_]{35}",
+              r"sk_live_[0-9a-zA-Z]{24,}",
+              r"xox[baprs]-[0-9a-zA-Z-]+",
+          ]
+          issues = []
+          for path in Path("aibenchmark").rglob("*.py"):
+              text = path.read_text(encoding="utf-8", errors="ignore")
+              for pat in secret_patterns:
+                  if re.search(pat, text):
+                      issues.append(f"{path} contains potential secret")
+          if issues:
+              print("\n".join(issues))
+              raise SystemExit(1)
+          print("No hardcoded secrets detected.")
+          PY

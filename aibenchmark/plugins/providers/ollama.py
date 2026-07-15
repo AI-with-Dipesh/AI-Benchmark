@@ -14,6 +14,7 @@ class OllamaProvider(BaseProvider):
     provider_type = ProviderType.OLLAMA
     plugin_name = "ollama"
 
+    plugin_api_version = "1.0"
     def __init__(self, api_key: str = "", base_url: str = "http://localhost:11434/v1", **kwargs):
         super().__init__(api_key, base_url, **kwargs)
 

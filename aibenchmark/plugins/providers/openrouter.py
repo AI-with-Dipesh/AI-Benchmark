@@ -14,6 +14,7 @@ class OpenRouterProvider(BaseProvider):
     provider_type = ProviderType.OPENROUTER
     plugin_name = "openrouter"
 
+    plugin_api_version = "1.0"
     def __init__(self, api_key: str, base_url: str = "https://openrouter.ai/api/v1", **kwargs):
         super().__init__(api_key, base_url, **kwargs)
 

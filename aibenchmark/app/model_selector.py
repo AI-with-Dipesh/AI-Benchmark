@@ -16,6 +16,7 @@ logger = logging.getLogger(__name__)
 @register(PluginCategory.STRATEGY, "model_selector")
 class ModelSelector(BaseStrategy):
     plugin_name = "model_selector"
+    plugin_api_version = "1.0"
     plugin_category = "strategy"
     plugin_priority = 100
 
@@ -49,14 +50,75 @@ class ModelSelector(BaseStrategy):
             )
         return plan
 
+    def _prompt_token_estimate(self, benchmark_name: Any) -> int:
+        from aibenchmark.app.prompts import PromptLoader
+
+        loader = PromptLoader()
+        prompt = loader.load(benchmark_name)
+        if prompt is None:
+            return 0
+        text = " ".join(filter(None, [prompt.system or "", prompt.user or ""]))
+        return max(1, len(text.split()))
+
+    def _check_context_window(
+        self,
+        provider: str,
+        model: str,
+        prompt_tokens: int,
+        caps: ProviderCapabilities,
+    ) -> tuple[bool, str | None]:
+        context_window = caps.context_window
+        if context_window is None:
+            return True, None
+        max_output = caps.max_output_tokens or 0
+        est_completion = max(prompt_tokens // 2, max_output)
+        if prompt_tokens + est_completion <= context_window:
+            return True, None
+        return False, f"Estimated prompt+completion exceeds context window ({context_window})"
+
+    def _history_score(self, provider: str, model: str, context: RoutingContext) -> float:
+        try:
+            from aibenchmark.app.history import recent_category_performance
+
+            stats = recent_category_performance(
+                db_path=None,
+                benchmark_name=context.benchmark_name.value,
+                limit=context.history_runs,
+            )
+            key = f"{provider}:{model}"
+            entry = stats.get(key, {})
+            success = entry.get("success_rate", 0.5)
+            normalized = entry.get("normalized", 0.0)
+            cost = entry.get("estimated_cost", 0.0)
+            cost_eff = 1.0 / (1.0 + cost)
+            return success * 0.5 + normalized * 0.3 + cost_eff * 0.2
+        except Exception:
+            return 0.0
+
     def _candidates(self, context: RoutingContext) -> list[dict[str, Any]]:
         candidates: list[dict[str, Any]] = []
+        prompt_tokens = self._prompt_token_estimate(context.benchmark_name)
+        history_stats: dict[str, dict[str, Any]] = {}
+        try:
+            from aibenchmark.app.history import recent_category_performance
+
+            history_stats = recent_category_performance(
+                db_path=None,
+                benchmark_name=context.benchmark_name.value,
+                limit=context.history_runs,
+            )
+        except Exception:
+            pass
         names = [context.provider_name] if context.provider_name else self._registry.list_providers()
         for provider_name in names:
             try:
                 caps = self._registry.capabilities(provider_name)
             except ValueError:
                 continue
+            if getattr(caps, "context_window", None) is not None:
+                est_completion = max(prompt_tokens // 2, (getattr(caps, "max_output_tokens", None) or 0))
+                if prompt_tokens + est_completion > caps.context_window:
+                    continue
             models = self._registry.list_models(provider_name)
             if not models:
                 continue
@@ -76,6 +138,13 @@ class ModelSelector(BaseStrategy):
                     est = (8192 / 1000.0) * pp + (1024 / 1000.0) * cp
                 except Exception:
                     pass
+                key = f"{provider_name}:{model}"
+                entry = history_stats.get(key, {})
+                success = entry.get("success_rate", 0.5)
+                norm = entry.get("normalized", 0.0)
+                cost = entry.get("estimated_cost", 0.0)
+                cost_eff = 1.0 / (1.0 + cost)
+                history = success * 0.5 + norm * 0.3 + cost_eff * 0.2
                 candidates.append(
                     {
                         "provider": provider_name,
@@ -84,6 +153,7 @@ class ModelSelector(BaseStrategy):
                         "estimated_cost": est,
                         "health": health,
                         "capabilities": caps,
+                        "history_score": history,
                     }
                 )
         return candidates
@@ -107,50 +177,79 @@ class ModelSelector(BaseStrategy):
 
     @staticmethod
     def _cost_aware(candidates: list[dict[str, Any]], context: RoutingContext) -> RoutingPlan:
-        candidates.sort(key=lambda x: (x["estimated_cost"], -x["capability_score"]))
+        candidates.sort(
+            key=lambda x: (
+                x["estimated_cost"],
+                -x["capability_score"],
+                -x.get("history_score", 0.0),
+                x["provider"],
+                x["model"],
+            )
+        )
         chosen = candidates[0]
         fallbacks = [c["provider"] for c in candidates[1:4] if c["provider"] != chosen["provider"]]
+        chosen_provider = chosen["provider"]
+        fallback_models = [c["model"] for c in candidates[1:4] if c["provider"] == chosen_provider and c["model"] != chosen["model"]]
         return RoutingPlan(
             provider=chosen["provider"],
             model=chosen["model"],
             estimated_cost=chosen["estimated_cost"],
             rationale=f"cost_aware: selected cheapest qualified model after capability filtering (cost={chosen['estimated_cost']:.4f})",
             fallback_providers=fallbacks,
-            fallback_models=[],
+            fallback_models=fallback_models,
         )
 
     @staticmethod
     def _capability_first(candidates: list[dict[str, Any]], context: RoutingContext) -> RoutingPlan:
-        candidates.sort(key=lambda x: (-x["capability_score"], x["estimated_cost"]))
+        candidates.sort(
+            key=lambda x: (
+                -x["capability_score"],
+                x["estimated_cost"],
+                -x.get("history_score", 0.0),
+                x["provider"],
+                x["model"],
+            )
+        )
         chosen = candidates[0]
         fallbacks = [c["provider"] for c in candidates[1:4] if c["provider"] != chosen["provider"]]
+        chosen_provider = chosen["provider"]
+        fallback_models = [c["model"] for c in candidates[1:4] if c["provider"] == chosen_provider and c["model"] != chosen["model"]]
         return RoutingPlan(
             provider=chosen["provider"],
             model=chosen["model"],
             estimated_cost=chosen["estimated_cost"],
             rationale=f"capability_first: selected highest capability score ({chosen['capability_score']:.2f})",
             fallback_providers=fallbacks,
-            fallback_models=[],
+            fallback_models=fallback_models,
         )
 
     def _health_first(self, candidates: list[dict[str, Any]], context: RoutingContext) -> RoutingPlan:
-        def sort_key(x: dict[str, Any]) -> tuple[float, float, float]:
+        def sort_key(x: dict[str, Any]) -> tuple[float, float, float, float, str, str]:
             health = x["health"]
             failure = health.failure_rate if health else 0.0
             latency = health.average_latency_ms or 0.0
             cost = x["estimated_cost"]
-            return (failure, latency, cost)
+            return (
+                failure,
+                latency,
+                cost,
+                -x.get("history_score", 0.0),
+                x["provider"],
+                x["model"],
+            )
 
         candidates.sort(key=sort_key)
         chosen = candidates[0]
         fallbacks = [c["provider"] for c in candidates[1:4] if c["provider"] != chosen["provider"]]
+        chosen_provider = chosen["provider"]
+        fallback_models = [c["model"] for c in candidates[1:4] if c["provider"] == chosen_provider and c["model"] != chosen["model"]]
         return RoutingPlan(
             provider=chosen["provider"],
             model=chosen["model"],
             estimated_cost=chosen["estimated_cost"],
             rationale=f"health_first: selected lowest failure rate provider ({chosen['health'].failure_rate:.2%})",
             fallback_providers=fallbacks,
-            fallback_models=[],
+            fallback_models=fallback_models,
         )
 
     @staticmethod
@@ -158,11 +257,13 @@ class ModelSelector(BaseStrategy):
         index = hash((context.benchmark_name.value, context.provider_name)) % len(candidates)
         chosen = candidates[index]
         fallbacks = [c["provider"] for c in candidates[(index + 1) : (index + 4)] if c["provider"] != chosen["provider"]]
+        chosen_provider = chosen["provider"]
+        fallback_models = [c["model"] for c in candidates[(index + 1) : (index + 4)] if c["provider"] == chosen_provider and c["model"] != chosen["model"]]
         return RoutingPlan(
             provider=chosen["provider"],
             model=chosen["model"],
             estimated_cost=chosen["estimated_cost"],
             rationale="round_robin: deterministic selection by benchmark hash",
             fallback_providers=fallbacks,
-            fallback_models=[],
+            fallback_models=fallback_models,
         )

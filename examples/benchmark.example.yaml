@@ -1,0 +1,88 @@
+schema_version: "1.0"
+
+weights:
+  coding: 25
+  debugging: 20
+  reasoning: 15
+  research: 15
+  code_review: 10
+  general: 5
+  json: 5
+  instruction: 5
+  latency: 10
+
+default_prompts:
+  coding: "prompts/coding.yaml"
+  debugging: "prompts/debugging.yaml"
+  reasoning: "prompts/reasoning.yaml"
+  research: "prompts/research.yaml"
+  code_review: "prompts/code_review.yaml"
+  general: "prompts/general.yaml"
+  json: "prompts/json.yaml"
+  instruction: "prompts/instruction.yaml"
+  latency: "prompts/latency.yaml"
+
+run_defaults:
+  temperature: 0.2
+  top_p: 0.95
+  seed: null
+  iterations: 3
+  confidence_threshold: 0.6
+  recommendation_stability_threshold: 0.05
+
+retry:
+  retry_count: 2
+  backoff_factor: 1.5
+  retryable:
+    - "timeout"
+    - "connection"
+    - "rate"
+    - "server_error"
+
+timeouts:
+  request: 60
+  benchmark: 240
+  category: 120
+  connect: 10
+
+cost:
+  ollama:
+    llama3: { prompt: 0.0, completion: 0.0 }
+  openrouter:
+    default: { prompt: 0.001, completion: 0.002 }
+  nvidia:
+    default: { prompt: 0.001, completion: 0.002 }
+  huggingface:
+    default: { prompt: 0.0006, completion: 0.0006 }
+
+prompt_versions:
+  coding: "1.0"
+  debugging: "1.0"
+  reasoning: "1.0"
+  research: "1.0"
+  code_review: "1.0"
+  general: "1.0"
+  json: "1.0"
+  instruction: "1.0"
+  latency: "1.0"
+
+benchmark_version: "1.0.0"
+
+routing:
+  strategy: cost_aware
+  cost_ceiling: 0.0
+  fallback_enabled: true
+  fallback_chain:
+    - "ollama"
+  circuit_breaker:
+    enabled: true
+    failure_rate_threshold: 0.5
+    cooldown_seconds: 300
+  parallel:
+    enabled: false
+    max_workers: 4
+  preference:
+    prefer_free: false
+    min_capability_score: 0.7
+  fallback:
+    strategy: provider_first
