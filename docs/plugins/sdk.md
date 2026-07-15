@@ -59,4 +59,3 @@ benchmark provider validate-compat
 ## See Also
 
 - [Plugin Compatibility Guide](./compatibility.md)
-- [Writing Benchmarks](../usage/writing-benchmarks.md)
