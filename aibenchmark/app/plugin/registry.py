@@ -19,10 +19,10 @@ class PluginCompatibilityWarning(Warning):
 
 def get_manager() -> PluginManager:
     if hasattr(get_manager, "_instance"):
-        return get_manager._instance # type: ignore[return-value]
-    get_manager._instance = PluginManager() # type: ignore[attr-defined]
-    get_manager._instance.discover() # type: ignore[attr-defined]
-    return get_manager._instance # type: ignore[return-value]
+        return get_manager._instance  # type: ignore[no-any-return, attr-defined]
+    get_manager._instance = PluginManager()  # type: ignore[attr-defined]
+    get_manager._instance.discover()  # type: ignore[attr-defined]
+    return get_manager._instance  # type: ignore[no-any-return, attr-defined]
 
 
 def _validate_plugin_metadata(cls: type[T]) -> None:

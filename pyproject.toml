@@ -84,9 +84,6 @@ addopts = "--cov=aibenchmark --cov-report=term-missing --cov-config=pyproject.to
 markers = [
     "integration: marks tests as integration tests that may require external services",
 ]
-filterwarnings = [
-    "ignore::ResourceWarning",
-]
 [tool.coverage.run]
 source = ["aibenchmark"]
 omit = [
@@ -94,3 +91,6 @@ omit = [
     "aibenchmark/plugins/providers/*",
     "aibenchmark/plugin/__init__.py",
 ]
+
+[tool.coverage.report]
+fail_under = 95

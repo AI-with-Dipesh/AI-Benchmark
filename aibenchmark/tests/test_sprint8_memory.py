@@ -81,6 +81,7 @@ def test_recent_runs_reuse_passed_connection(tmp_path: Path) -> None:
     # We call recent_runs with explicit db_path to verify the happy path.
     runs = recent_runs(db_path=db, limit=1)
     assert len(runs) == 1
+    conn.close()
 
 
 def test_memory_profiler_rss_samples() -> None:

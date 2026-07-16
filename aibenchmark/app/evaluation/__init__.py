@@ -109,7 +109,7 @@ class CodeEvaluator(BaseEvaluator):
         expected_score = _expected_token_coverage(raw, expected)
         score = min(1.0, score + expected_score * 0.3)
 
-        metadata = {
+        metadata: dict[str, Any] = {
             "syntax_ok": syntax_ok,
             "functions": functions,
             "cyclomatic_complexity": complexity,
@@ -141,7 +141,7 @@ class DebuggingEvaluator(BaseEvaluator):
 
         exact_root = bool(re.search(r"root\s+cause", text.lower()))
         exact_fix = bool(re.search(r"\bfix\b", text.lower()))
-        expected_score = sum(1 for t in expected_tokens if t in response_tokens)
+        expected_score: float = sum(1 for t in expected_tokens if t in response_tokens)
         expected_score = expected_score / len(expected_tokens) if expected_tokens else 0.0
 
         code_blocks = re.findall(r"```(?:[a-zA-Z]*\n)?([\s\S]*?)```", text)
@@ -190,7 +190,7 @@ class ResearchEvaluator(BaseEvaluator):
 
         citation_score = 1.0 if any(marker in text for marker in ["[", "]", "(", ")", "http"]) else 0.0
         structure_score = 1.0 if any(marker in text for marker in ["##", "###", "- ", "* ", "1."]) else 0.0
-        expected_score = sum(1 for t in expected_tokens if t in response_tokens)
+        expected_score: float = sum(1 for t in expected_tokens if t in response_tokens)
         expected_score = expected_score / len(expected_tokens) if expected_tokens else 0.0
         objective = min(1.0, expected_score * 0.45 + citation_score * 0.3 + structure_score * 0.25)
 
@@ -228,7 +228,7 @@ class ReasoningEvaluator(BaseEvaluator):
 
         step_tokens = ["step", "first", "second", "then", "because"]
         steps_score = 1.0 if any(term in text.lower() for term in step_tokens) else 0.0
-        expected_score = sum(1 for t in expected_tokens if t in response_tokens)
+        expected_score: float = sum(1 for t in expected_tokens if t in response_tokens)
         expected_score = expected_score / len(expected_tokens) if expected_tokens else 0.0
         contradiction_penalty = 0.0
         lowered = text.lower()
@@ -266,7 +266,7 @@ class CodeReviewEvaluator(BaseEvaluator):
         expected = (self.prompt.get("expected") or "")
         expected_tokens = [t for t in re.split(r"\W+", expected.lower()) if t]
         response_tokens = set(re.split(r"\W+", text.lower()))
-        expected_score = sum(1 for t in expected_tokens if t in response_tokens)
+        expected_score: float = sum(1 for t in expected_tokens if t in response_tokens)
         expected_score = expected_score / len(expected_tokens) if expected_tokens else 0.0
 
         issue_types = ["sql", "xss", "injection", "complexity", "memory", "race", "auth", "permission"]

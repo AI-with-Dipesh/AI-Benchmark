@@ -188,7 +188,10 @@ class AppConfig:
     def provider_config(self, name: str) -> dict[str, Any]:
         if name not in self.providers:
             raise ConfigError(f"Unknown provider in config: {name}")
-        return self.providers[name]
+        cfg = self.providers[name]
+        if not isinstance(cfg, dict):
+            return {}
+        return cfg
 
     def defaults(self) -> dict[str, Any]:
         defaults = self.providers.get("defaults", {})

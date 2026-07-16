@@ -89,7 +89,7 @@ class HistoryWriter:
 
     def __init__(self, db_path: Path | None = None) -> None:
         self.db_path = db_path or DB_PATH
-        self._conn = _connect(self.db_path)
+        self._conn: sqlite3.Connection | None = _connect(self.db_path)
         self._lock = threading.Lock()
         init_db(self._conn)
 
@@ -161,7 +161,7 @@ def save_run(results: list[BenchmarkResult], details: dict[str, Any] | None = No
         "INSERT INTO runs (timestamp, provider, model, overall, benchmark_count) VALUES (?, ?, ?, ?, ?)",
         (now, primary.provider.value, primary.model, primary.overall, len(results)),
     )
-    run_id = int(cur.lastrowid)
+    run_id = int(cur.lastrowid or 0)
     for r in results:
         for s in r.scores:
             conn.execute(
@@ -210,50 +210,54 @@ def save_run(results: list[BenchmarkResult], details: dict[str, Any] | None = No
 
 def load_latest(n: int = 1, db_path: Path | None = None) -> list[list[BenchmarkResult]]:
     conn = _connect(db_path)
-    init_db(conn)
-    rows = conn.execute(
-        "SELECT run_id FROM runs ORDER BY timestamp DESC LIMIT ?", (n,)
-    ).fetchall()
-    return [load_run(int(row["run_id"]), db_path=db_path, conn=conn) for row in rows]
+    try:
+        init_db(conn)
+        rows = conn.execute(
+            "SELECT run_id FROM runs ORDER BY timestamp DESC LIMIT ?", (n,)
+        ).fetchall()
+        return [load_run(int(row["run_id"]), db_path=db_path, conn=conn) for row in rows]
+    finally:
+        conn.close()
 
 
 def load_run(run_id: int, db_path: Path | None = None, conn: sqlite3.Connection | None = None) -> list[BenchmarkResult]:
+    owned = conn is None
     if conn is None:
         conn = _connect(db_path)
-    init_db(conn)
-    run = conn.execute("SELECT * FROM runs WHERE run_id = ?", (run_id,)).fetchone()
-    if not run:
-        raise KeyError(f"Run {run_id} not found.")
-    scores = conn.execute(
-        "SELECT benchmark, raw, normalized, weight, weighted FROM benchmark_scores WHERE run_id = ?",
-        (run_id,),
-    ).fetchall()
-    results: dict[tuple[str, str], BenchmarkResult] = {}
-    for s in scores:
-        key = (run["provider"], run["model"])
-        if key not in results:
-            results[key] = BenchmarkResult(
-                model=run["model"],
-                provider=ProviderType(run["provider"]),
-                metadata={"timestamp": run["timestamp"]},
+    try:
+        init_db(conn)
+        run = conn.execute("SELECT * FROM runs WHERE run_id = ?", (run_id,)).fetchone()
+        if not run:
+            raise KeyError(f"Run {run_id} not found.")
+        scores = conn.execute(
+            "SELECT benchmark, raw, normalized, weight, weighted FROM benchmark_scores WHERE run_id = ?",
+            (run_id,),
+        ).fetchall()
+        results: dict[tuple[str, str], BenchmarkResult] = {}
+        for s in scores:
+            key = (run["provider"], run["model"])
+            if key not in results:
+                results[key] = BenchmarkResult(
+                    model=run["model"],
+                    provider=ProviderType(run["provider"]),
+                    metadata={"timestamp": run["timestamp"]},
+                )
+            try:
+                benchmark = BenchmarkName(s["benchmark"])
+            except ValueError:
+                continue
+            results[key].scores.append(
+                Score(
+                    benchmark=benchmark,
+                    raw=s["raw"],
+                    normalized=s["normalized"],
+                    weight=s["weight"],
+                    weighted=s["weighted"],
+                )
             )
-        try:
-            benchmark = BenchmarkName(s["benchmark"])
-        except ValueError:
-            continue
-        results[key].scores.append(
-            Score(
-                benchmark=benchmark,
-                raw=s["raw"],
-                normalized=s["normalized"],
-                weight=s["weight"],
-                weighted=s["weighted"],
-            )
-        )
-    for r in results.values():
-        r.calculate_overall()
-        r.metadata.setdefault("timestamp", run["timestamp"])
-    if conn is not None:
+        for r in results.values():
+            r.calculate_overall()
+            r.metadata.setdefault("timestamp", run["timestamp"])
         rows_details = conn.execute(
             "SELECT metadata FROM run_details WHERE run_id = ?", (run_id,)
         ).fetchone()
@@ -283,7 +287,10 @@ def load_run(run_id: int, db_path: Path | None = None, conn: sqlite3.Connection 
                         target.timeout_status = entry.get("timeout_status", target.timeout_status)
             except Exception:
                 pass
-    return list(results.values())
+        return list(results.values())
+    finally:
+        if owned:
+            conn.close()
 
 
 def _json_default(value: Any) -> Any:
@@ -306,7 +313,6 @@ def recent_category_performance(
     run count, latest timestamp, success proxy, and estimated cost.
     """
     path = db_path or DB_PATH
-    owned = db_path is None
     conn = _connect(path)
     try:
         init_db(conn)
@@ -363,14 +369,12 @@ def recent_category_performance(
             pass
         return result
     finally:
-        if owned and conn is not None:
-            conn.close()
+        conn.close()
 
 
 def recent_runs(db_path: Path | None = None, limit: int = 5) -> list[dict[str, Any]]:
     """Return lightweight summaries of recent runs."""
     path = db_path or DB_PATH
-    owned = db_path is None
     conn = _connect(path)
     try:
         init_db(conn)
@@ -381,5 +385,4 @@ def recent_runs(db_path: Path | None = None, limit: int = 5) -> list[dict[str, A
         ).fetchall()
         return [dict(row) for row in rows]
     finally:
-        if owned and conn is not None:
-            conn.close()
+        conn.close()

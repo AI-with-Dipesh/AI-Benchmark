@@ -34,7 +34,7 @@ class PluginManager:
         store = getattr(self, f"{store_name}s" if store_name != "strategies" else store_name, None)
         if store is None:
             return None
-        return store.get(name)
+        return store.get(name)  # type: ignore[no-any-return]
 
     def list_names(self, category: PluginCategory) -> list[str]:
         store_name = category.value if category.value != "strategy" else "strategies"

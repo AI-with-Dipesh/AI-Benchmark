@@ -87,9 +87,9 @@ class ModelSelector(BaseStrategy):
             )
             key = f"{provider}:{model}"
             entry = stats.get(key, {})
-            success = entry.get("success_rate", 0.5)
-            normalized = entry.get("normalized", 0.0)
-            cost = entry.get("estimated_cost", 0.0)
+            success = float(entry.get("success_rate", 0.5))
+            normalized = float(entry.get("normalized", 0.0))
+            cost = float(entry.get("estimated_cost", 0.0))
             cost_eff = 1.0 / (1.0 + cost)
             return success * 0.5 + normalized * 0.3 + cost_eff * 0.2
         except Exception:

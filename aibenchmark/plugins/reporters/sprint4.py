@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Any
+from typing import Any, Callable, cast
 
 from aibenchmark.app.calibration import calibrate
 from aibenchmark.app.models import BenchmarkResult, PluginCategory
@@ -72,7 +72,8 @@ def generate_tokens(results: list[BenchmarkResult], path: Path, **kwargs: object
 
 def generate_cost(results: list[BenchmarkResult], path: Path, **kwargs: object) -> None:
     runs = _resolve_runs(results, kwargs)
-    report = cost_report(runs, price_lookup=kwargs.get("price_lookup"))
+    price_lookup = kwargs.get("price_lookup")
+    report = cost_report(runs, price_lookup=cast(Callable[[str, str], tuple[float, float]] | None, price_lookup))
     lines = ["# Cost Report\n", f"Total cost: {report.total_cost:.4f}"]
     lines.append("\nBy provider:")
     for provider, cost in report.by_provider.items():

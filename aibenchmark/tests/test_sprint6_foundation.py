@@ -55,11 +55,13 @@ class TestHistoryWriter:
         a = HistoryWriter.instance()
         b = HistoryWriter.instance()
         assert a is b
+        HistoryWriter.reset()
 
     def test_save_and_load(self, tmp_path) -> None:  # type: ignore[no-untyped-def]
         HistoryWriter.reset()
         writer = HistoryWriter.instance(tmp_path / "history.db")
         from aibenchmark.app.models import BenchmarkResult, ProviderType, Score
+
         results = [
             BenchmarkResult(
                 model="m1",
@@ -69,6 +71,7 @@ class TestHistoryWriter:
         ]
         run_id = writer.save_run(results)
         assert run_id > 0
+        HistoryWriter.reset()
 
     def test_concurrent_writes_do_not_corrupt(self, tmp_path) -> None:  # type: ignore[no-untyped-def]
         HistoryWriter.reset()
@@ -97,6 +100,7 @@ class TestHistoryWriter:
         for t in threads:
             t.join()
         assert not errors
+        HistoryWriter.reset()
 
 
 class TestConfigRouting:

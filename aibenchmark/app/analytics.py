@@ -3,7 +3,7 @@ from __future__ import annotations
 import math
 from collections import defaultdict
 from dataclasses import dataclass, field
-from typing import Sequence
+from typing import Callable, Sequence
 
 from aibenchmark.app.models import BenchmarkResult
 
@@ -164,14 +164,14 @@ def recommend(results: Sequence[BenchmarkResult]) -> list[Recommendation]:
         weight = next((s.weight for s in best_result.scores if s.benchmark.value == category), 1.0)
         rej: dict[str, list[str]] = {}
         for alt_score, alt_result, _, alt_latency, alt_reliability in candidates[1:]:
-            reasons: list[str] = []
+            alt_reasons: list[str] = []
             if alt_score < best_score:
-                reasons.append(f"Lower category score ({alt_score:.2f} vs {best_score:.2f})")
+                alt_reasons.append(f"Lower category score ({alt_score:.2f} vs {best_score:.2f})")
             if alt_latency is not None and best_latency is not None and alt_latency > best_latency:
-                reasons.append(f"Higher latency ({alt_latency:.0f}ms vs {best_latency:.0f}ms)")
+                alt_reasons.append(f"Higher latency ({alt_latency:.0f}ms vs {best_latency:.0f}ms)")
             if alt_reliability is not None and best_reliability is not None and alt_reliability < best_reliability:
-                reasons.append(f"Lower reliability ({alt_reliability:.2f} vs {best_reliability:.2f})")
-            rej[alt_result.model] = reasons
+                alt_reasons.append(f"Lower reliability ({alt_reliability:.2f} vs {best_reliability:.2f})")
+            rej[alt_result.model] = alt_reasons
         recommendations.append(
             Recommendation(
                 category=category,
@@ -224,13 +224,13 @@ def build_team(results: Sequence[BenchmarkResult]) -> list[TeamRole]:
     if not recommendations:
         return []
 
-    team_specs = [
-        ("Main", None, lambda r: r.overall, ["Highest overall score"]),
-        ("Coding", "coding", lambda r: next((s.normalized for s in r.scores if s.benchmark.value == "coding"), 0.0), ["Top coding score"]),
-        ("Debugging", "debugging", lambda r: next((s.normalized for s in r.scores if s.benchmark.value == "debugging"), 0.0), ["Top debugging score"]),
-        ("Reasoning", "reasoning", lambda r: next((s.normalized for s in r.scores if s.benchmark.value == "reasoning"), 0.0), ["Top reasoning score"]),
-        ("Research", "research", lambda r: next((s.normalized for s in r.scores if s.benchmark.value == "research"), 0.0), ["Top research score"]),
-        ("Review", "code_review", lambda r: next((s.normalized for s in r.scores if s.benchmark.value == "code_review"), 0.0), ["Top review score"]),
+    team_specs: list[tuple[str, str | None, Callable[[BenchmarkResult], float], list[str], bool]] = [
+        ("Main", None, lambda r: r.overall, ["Highest overall score"], False),
+        ("Coding", "coding", lambda r: next((s.normalized for s in r.scores if s.benchmark.value == "coding"), 0.0), ["Top coding score"], False),
+        ("Debugging", "debugging", lambda r: next((s.normalized for s in r.scores if s.benchmark.value == "debugging"), 0.0), ["Top debugging score"], False),
+        ("Reasoning", "reasoning", lambda r: next((s.normalized for s in r.scores if s.benchmark.value == "reasoning"), 0.0), ["Top reasoning score"], False),
+        ("Research", "research", lambda r: next((s.normalized for s in r.scores if s.benchmark.value == "research"), 0.0), ["Top research score"], False),
+        ("Review", "code_review", lambda r: next((s.normalized for s in r.scores if s.benchmark.value == "code_review"), 0.0), ["Top review score"], False),
         ("Fast", None, lambda r: _parse_latency(r) or 9999.0, ["Lowest latency"], True),
         ("Fallback", None, lambda r: max((s.normalized for s in r.scores), default=0.0), ["Highest minimum score across categories"], True),
     ]
@@ -241,8 +241,7 @@ def build_team(results: Sequence[BenchmarkResult]) -> list[TeamRole]:
         return []
 
     roles: list[TeamRole] = []
-    for role_name, category, scorer, reason_template, *rest in team_specs:
-        reverse = rest and rest[0]
+    for role_name, category, scorer, reason_template, reverse in team_specs:
         candidates_sorted = sorted(candidates, key=scorer, reverse=not reverse)
         best = candidates_sorted[0]
         score = scorer(best)
@@ -420,7 +419,7 @@ def most_stable(runs: Sequence[Sequence[BenchmarkResult]]) -> TrendEntry | None:
     stable = [t for t in trends.values() if t.stability_delta is not None]
     if not stable:
         return None
-    stable.sort(key=lambda t: t.stability_delta)  # type: ignore[arg-type]
+    stable.sort(key=lambda t: t.stability_delta or 0.0)
     return stable[0]
 
 

@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 from aibenchmark.app.analytics import (
     build_leaderboard,
@@ -91,7 +91,7 @@ def generate_team(results: list[BenchmarkResult], path: Path, **kwargs: object) 
 
 
 def generate_compare(results: list[BenchmarkResult], path: Path, **kwargs: object) -> None:
-    db_path = kwargs.get("db_path")
+    db_path = cast("Path | None", kwargs.get("db_path"))
     runs = _load_results_from_runs(2, db_path=db_path)
     if len(runs) >= 2:
         latest = runs[0]
@@ -110,7 +110,7 @@ def generate_compare(results: list[BenchmarkResult], path: Path, **kwargs: objec
 
 
 def generate_trends(results: list[BenchmarkResult], path: Path, **kwargs: object) -> None:
-    db_path = kwargs.get("db_path")
+    db_path = cast("Path | None", kwargs.get("db_path"))
     runs = load_latest(5, db_path=db_path)
     if len(runs) < 2:
         path.write_text("# Trends\n\nNeed >=2 runs for trend analysis.\n")
