@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import pytest
 
 from aibenchmark.app.models import BenchmarkResult, ProviderType, Score
 from aibenchmark.app.rc_validation import (

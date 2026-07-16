@@ -1,6 +1,7 @@
 import json
 import csv
 from pathlib import Path
+from typing import Any
 
 from aibenchmark.app.models import BenchmarkResult, PluginCategory
 from aibenchmark.app.plugin.registry import register
@@ -12,7 +13,7 @@ class JsonReporter:
     plugin_api_version = "1.0"
     plugin_category = "reporter"
 
-    def generate(self, results: list[BenchmarkResult], path: Path, **kwargs) -> None:
+    def generate(self, results: list[BenchmarkResult], path: Path, **kwargs: Any) -> None:
         data = []
         for r in results:
             data.append(
@@ -46,7 +47,7 @@ class MarkdownReporter:
     plugin_api_version = "1.0"
     plugin_category = "reporter"
 
-    def generate(self, results: list[BenchmarkResult], path: Path, **kwargs) -> None:
+    def generate(self, results: list[BenchmarkResult], path: Path, **kwargs: Any) -> None:
         lines = [
             "# Benchmark Results\n",
             "| Model | Provider | Category | Score | Weighted | Evaluation |",
@@ -67,7 +68,7 @@ class CsvReporter:
     plugin_api_version = "1.0"
     plugin_category = "reporter"
 
-    def generate(self, results: list[BenchmarkResult], path: Path, **kwargs) -> None:
+    def generate(self, results: list[BenchmarkResult], path: Path, **kwargs: Any) -> None:
         with path.open("w", newline="", encoding="utf-8") as handle:
             writer = csv.writer(handle)
             writer.writerow(["model", "provider", "category", "overall", "weighted"])

@@ -2,38 +2,29 @@
 
 from __future__ import annotations
 
-import json
 import tempfile
 from pathlib import Path
 from typing import Any
-from unittest.mock import MagicMock
 
 import pytest
-import yaml
 
 from aibenchmark.app.analytics import (
-    best_value,
     build_comparison,
     build_trends,
-    fastest,
-    highest_quality,
-    most_stable,
     recommend,
 )
 from aibenchmark.app.config import AppConfig, ConfigError
 from aibenchmark.app.models import (
     BenchmarkName,
     BenchmarkResult,
-    PluginCategory,
     ProviderCapabilities,
     ProviderType,
-    ResponseObject,
     RoutingContext,
     Score,
 )
 from aibenchmark.app.validation import validate_json_schema
 from aibenchmark.app.model_selector import ModelSelector
-from aibenchmark.app.history import HistoryWriter, load_latest, load_run, save_run
+from aibenchmark.app.history import HistoryWriter, load_run, save_run
 from aibenchmark.plugins.reporters.provider_comparison import ProviderComparisonReporter
 
 

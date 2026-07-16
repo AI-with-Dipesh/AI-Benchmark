@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Sequence
+from typing import Callable, Sequence
 
 from aibenchmark.app.models import BenchmarkResult, CostEntry, CostReport, TokenReport, TokenUsage
 
@@ -50,7 +50,7 @@ def token_report(results: Sequence[BenchmarkResult]) -> TokenReport:
     )
 
 
-def cost_report(results: Sequence[Sequence[BenchmarkResult]], price_lookup=None) -> CostReport:
+def cost_report(results: Sequence[Sequence[BenchmarkResult]], price_lookup: Callable[[str, str], tuple[float, float]] | None = None) -> CostReport:
     total_cost = 0.0
     entries: list[CostEntry] = []
     by_provider: dict[str, float] = {}

@@ -3,8 +3,8 @@
 from __future__ import annotations
 
 import time
+from typing import Any
 
-import pytest
 
 from aibenchmark.app.memory_profiler import MemoryProfiler
 from aibenchmark.app.parallel_executor import ParallelExecutor

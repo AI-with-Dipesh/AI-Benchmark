@@ -5,9 +5,9 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 from aibenchmark.app.config import AppConfig, ConfigError
-from aibenchmark.app.models import BenchmarkName, PluginCategory, ProviderCapabilities, RoutingContext
+from aibenchmark.app.models import BenchmarkName, ProviderCapabilities, RoutingContext
 from aibenchmark.app.model_selector import ModelSelector
-from aibenchmark.app.provider_health import HealthTracker, ProviderHealth, ProviderStatus
+from aibenchmark.app.provider_health import ProviderHealth, ProviderStatus
 
 
 def _make_selector(provider="ollama", model="llama3"):

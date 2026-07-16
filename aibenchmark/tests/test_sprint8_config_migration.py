@@ -5,7 +5,6 @@ import pytest
 from aibenchmark.app.config_migration import (
     ConfigMigrationError,
     MIGRATIONS,
-    MigrationResult,
     apply_migration,
     migrate_0_7_to_1_0,
 )

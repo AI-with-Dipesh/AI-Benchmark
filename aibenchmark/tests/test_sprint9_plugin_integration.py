@@ -5,11 +5,9 @@ import importlib.util
 import warnings
 from pathlib import Path
 
-import pytest
 
 from aibenchmark.app.models import PluginCategory
 from aibenchmark.app.plugin.registry import (
-    CURRENT_PLUGIN_API_VERSION,
     PluginCompatibilityWarning,
     _validate_plugin_metadata,
     get_manager,

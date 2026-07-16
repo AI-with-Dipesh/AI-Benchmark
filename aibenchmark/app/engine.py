@@ -71,7 +71,8 @@ class BenchEngine:
         try:
             fb = self._get_strategy(PluginCategory.STRATEGY, "execution_policy")
             if fb is not None:
-                ep = fb()
+                from aibenchmark.app.execution_policy import ExecutionPolicy
+                ep: ExecutionPolicy = fb()
                 return ep.is_circuit_open(provider_name)
         except Exception:
             pass

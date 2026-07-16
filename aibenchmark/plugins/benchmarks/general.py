@@ -1,8 +1,8 @@
-from __future__ import annotations
-
 from aibenchmark.interfaces.benchmark import BaseBenchmark
 from aibenchmark.app.evaluation import GeneralEvaluator
-from aibenchmark.app.models import BenchmarkName, BenchmarkResult, PluginCategory, Score
+from typing import Any
+
+from aibenchmark.app.models import BenchmarkName, BenchmarkResult, PluginCategory, ResponseObject, Score
 from aibenchmark.app.plugin.registry import register
 
 
@@ -12,7 +12,7 @@ class GeneralBenchmark(BaseBenchmark):
     plugin_name = "general"
 
     plugin_api_version = "1.0"
-    def run(self, response, **kwargs):
+    def run(self, response: ResponseObject, **kwargs: Any) -> BenchmarkResult:
         prompt = kwargs.get("prompt", {})
         evaluator = GeneralEvaluator(self.name.value, prompt, response.content or "")
         result = evaluator.evaluate()

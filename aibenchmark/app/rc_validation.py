@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import logging
-from typing import Any
 
 from aibenchmark.app.models import BenchmarkResult, ValidationIssue, ValidationReport
 

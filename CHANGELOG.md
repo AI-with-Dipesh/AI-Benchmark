@@ -1,5 +1,24 @@
 # Changelog
 
+## [1.2.0] - 2026-07-16
+
+### Added
+- Comprehensive type annotation coverage across engine boundary files: `engine.py`, `model_selector.py`, `validation.py`, `parallel_executor.py`, `memory_profiler.py`, `prompts.py`, `token_accounting.py`, `rc_validation.py`, `cli.py`.
+- Type annotation cleanup in benchmark and provider plugins (`coding`, `debugging`, `general`, `instruction`, `json`, `latency`, `reasoning`, `research`, `code_review`, `ollama`, `huggingface`, `nvidia`, `openrouter`, `generator.py`).
+- Developer documentation at `docs/developer-guide.md`.
+- Release governance archive: Sprint 10 planning, technical debt register, implementation report, internal QA, QA resolution, QA re-validation, and RC validation reports.
+
+### Changed
+- Regression suite expanded by 48 new tests (6 files) covering auth, auto-validation, coverage config, execution policy, plugin manager, and validation logic.
+- Overall test count: 439 passed, 6 skipped, 0 failures.
+- Plugin registry validated: 37 plugins across 5 categories; all valid with consistent `plugin_api_version = "1.0"`.
+- Coverage improved to 93.52% raw (94% rounded) under Sprint 10 rounding policy.
+- MyPy static checking maintained within ≤40 error threshold with 0 new regressions introduced.
+
+### Fixed
+- Type-only internal refactors in `model_selector.py` and `engine.py` that extract inline imports to local variables to satisfy mypy without changing runtime behavior.
+- Module-level import organization to avoid circular dependency risks while preserving backward compatibility.
+
 ## [1.0.0] - 2026-07-15
 
 ### Added

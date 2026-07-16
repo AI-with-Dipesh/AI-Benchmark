@@ -15,7 +15,7 @@ class NVIDIAProvider(BaseProvider):
     plugin_name = "nvidia"
 
     plugin_api_version = "1.0"
-    def __init__(self, api_key: str, base_url: str = "https://integrate.api.nvidia.com/v1", **kwargs):
+    def __init__(self, api_key: str, base_url: str = "https://integrate.api.nvidia.com/v1", **kwargs: Any) -> None:
         super().__init__(api_key, base_url, **kwargs)
 
     def connect(self) -> None:
@@ -42,7 +42,7 @@ class NVIDIAProvider(BaseProvider):
             pass
         return []
 
-    def chat(self, model: str, messages: list[dict[str, str]], **kwargs) -> ResponseObject:
+    def chat(self, model: str, messages: list[dict[str, str]], **kwargs: Any) -> ResponseObject:
         start = time.perf_counter()
         import httpx
         with httpx.Client(timeout=60) as client:

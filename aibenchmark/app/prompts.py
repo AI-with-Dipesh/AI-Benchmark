@@ -3,11 +3,14 @@ from __future__ import annotations
 import logging
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import yaml
 
 from aibenchmark.app.models import BenchmarkName
+
+if TYPE_CHECKING:
+    from aibenchmark.app.config import AppConfig
 
 logger = logging.getLogger(__name__)
 
@@ -30,9 +33,9 @@ class PromptLoader:
 
     def __init__(self, config_dir: Path | None = None) -> None:
         self.config_dir = config_dir or Path(__file__).resolve().parent.parent.parent / "configs"
-        self._config = None
+        self._config: AppConfig | None = None
 
-    def _get_config(self):
+    def _get_config(self) -> AppConfig | None:
         if self._config is None:
             from aibenchmark.app.config import AppConfig
             try:

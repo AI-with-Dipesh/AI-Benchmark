@@ -73,7 +73,7 @@ prompt_versions:
   latency: "1.0"
 
 # Sprint 4: benchmark version
-benchmark_version: "1.0.0"
+benchmark_version: "1.2.0"
 
 # Sprint 6: intelligent routing configuration
 # All keys are optional. Missing keys fall back to defaults.

@@ -372,7 +372,7 @@ Cost is estimated from configured token prices in `configs/benchmark.yaml` under
 
 ## Version
 
-Current version: `1.0.0`
+Current version: `1.2.0`
 
 ## Sprint History
 
@@ -390,3 +390,5 @@ MIT
 ## Contributing
 
 PRs welcome. Run `pytest` and ensure coverage remains >=90% before submitting.
+
+See [docs/developer-guide.md](docs/developer-guide.md) for local setup, testing workflow, plugin development, and governance process.

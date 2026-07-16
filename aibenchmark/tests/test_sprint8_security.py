@@ -2,13 +2,11 @@
 
 from __future__ import annotations
 
-import io
+from pathlib import Path
 
 import pytest
-import yaml
 
 from aibenchmark.app.validation import (
-    JSONSchemaValidationError,
     YAMLSafetyError,
     JSONSchemaValidationError,
     safe_yaml_load,

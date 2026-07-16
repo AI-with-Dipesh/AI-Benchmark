@@ -1,12 +1,11 @@
 from __future__ import annotations
 
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 
-import pytest
 
 from aibenchmark.app.engine import BenchEngine
 from aibenchmark.app.execution_policy import ExecutionPolicy
-from aibenchmark.app.models import PluginCategory, RoutingPlan
+from aibenchmark.app.models import RoutingPlan
 
 
 def test_execution_policy_model_first_populates_fallback_models() -> None:

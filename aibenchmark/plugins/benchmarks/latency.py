@@ -1,7 +1,7 @@
-from __future__ import annotations
-
 from aibenchmark.interfaces.benchmark import BaseBenchmark
-from aibenchmark.app.models import BenchmarkName, BenchmarkResult, PluginCategory, Score
+from typing import Any
+
+from aibenchmark.app.models import BenchmarkName, BenchmarkResult, PluginCategory, ResponseObject, Score
 from aibenchmark.app.plugin.registry import register
 
 
@@ -11,7 +11,7 @@ class LatencyBenchmark(BaseBenchmark):
     plugin_name = "latency"
 
     plugin_api_version = "1.0"
-    def run(self, response, **kwargs):
+    def run(self, response: ResponseObject, **kwargs: Any) -> BenchmarkResult:
         latency = response.latency_ms or float("inf")
         normalized = max(0.0, min(1.0, 1.0 - (latency / 5000.0)))
         score = Score(

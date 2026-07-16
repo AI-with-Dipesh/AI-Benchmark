@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import json
 from pathlib import Path
 from typing import Any
 from unittest.mock import MagicMock
@@ -14,18 +13,14 @@ from aibenchmark.app.history import HistoryWriter, load_latest
 from aibenchmark.app.models import (
     BenchmarkName,
     BenchmarkResult,
-    PluginCategory,
     ProviderCapabilities,
     ProviderType,
     RoutingContext,
     Score,
 )
 from aibenchmark.app.config import ConfigError
-from aibenchmark.app.plugin.registry import PluginCompatibilityWarning, _validate_plugin_metadata, get_manager
-from aibenchmark.app.provider_registry import ProviderRegistry
 from aibenchmark.app.validation import (
     safe_yaml_load,
-    validate_benchmark_name,
     validate_json_schema,
     validate_metadata,
     validate_model_name,

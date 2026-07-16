@@ -4,11 +4,9 @@ from __future__ import annotations
 
 import sqlite3
 from pathlib import Path
-from unittest.mock import patch
 
-import pytest
 
-from aibenchmark.app.history import HistoryWriter, init_db, recent_category_performance, recent_runs, save_run
+from aibenchmark.app.history import HistoryWriter, init_db, recent_runs, save_run
 from aibenchmark.app.memory_profiler import MemoryProfiler, measure_memory
 from aibenchmark.app.models import BenchmarkName, BenchmarkResult, ProviderType, Score
 

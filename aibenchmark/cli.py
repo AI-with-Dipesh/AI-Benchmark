@@ -12,7 +12,7 @@ setup_logging()
 
 
 @click.group()
-def cli():
+def cli() -> None:
     pass
 
 
@@ -21,7 +21,7 @@ def cli():
 @click.option("--model", "-m", required=False)
 @click.option("--benchmark", "-b", multiple=True, default=None)
 @click.option("--out", "-o", default="history")
-def run(provider_name, model, benchmark, out):
+def run(provider_name: str, model: str | None, benchmark: tuple[str, ...], out: str) -> None:
     """Run selected benchmarks for a model.
 
     provider_name may be a configured provider name or 'main', which uses
@@ -34,8 +34,8 @@ def run(provider_name, model, benchmark, out):
 
     if provider_name == "main":
         defaults = engine.config.defaults()
-        provider_name = defaults.get("default_provider")
-        model = model or defaults.get("default_model")
+        provider_name = str(defaults.get("default_provider") or "")
+        model = model or str(defaults.get("default_model") or "")
         if not provider_name or not model:
             raise click.ClickException(
                 "Config missing 'defaults.default_provider' or 'defaults.default_model'."
@@ -72,13 +72,13 @@ def run(provider_name, model, benchmark, out):
 
 
 @cli.group()
-def provider():
+def provider() -> None:
     pass
 
 
 @provider.command("list")
 @click.argument("provider_name")
-def provider_list(provider_name):
+def provider_list(provider_name: str) -> None:
     import aibenchmark.plugins  # noqa: F401 - trigger built-in registration
     try:
         engine = BenchEngine()
@@ -103,7 +103,7 @@ def provider_list(provider_name):
 
 
 @cli.command("providers")
-def providers():
+def providers() -> None:
     """List all registered providers."""
     import aibenchmark.plugins  # noqa: F401
     engine = BenchEngine()
@@ -113,7 +113,7 @@ def providers():
 
 @provider.command("info")
 @click.argument("provider_name")
-def provider_info(provider_name):
+def provider_info(provider_name: str) -> None:
     """Print detailed provider info and metadata."""
     import aibenchmark.plugins  # noqa: F401
     from aibenchmark.app.provider_registry import ProviderRegistry
@@ -129,7 +129,7 @@ def provider_info(provider_name):
 
 @provider.command("health")
 @click.option("--provider", "provider_name", default=None, help="Specific provider to check.")
-def provider_health(provider_name):
+def provider_health(provider_name: str) -> None:
     """Show provider health status."""
     import aibenchmark.plugins  # noqa: F401
     from aibenchmark.app.provider_registry import ProviderRegistry
@@ -155,7 +155,7 @@ def provider_health(provider_name):
 
 @provider.command("compare")
 @click.argument("provider_names", nargs=-1)
-def provider_compare(provider_names):
+def provider_compare(provider_names: tuple[str, ...]) -> None:
     """Compare providers and show ranking."""
     import aibenchmark.plugins  # noqa: F401
     from aibenchmark.app.provider_registry import ProviderRegistry
@@ -170,7 +170,7 @@ def provider_compare(provider_names):
 
 @cli.command("models")
 @click.argument("provider_name", required=False)
-def models(provider_name):
+def models(provider_name: str) -> None:
     """List models for a provider."""
     import aibenchmark.plugins  # noqa: F401
     from aibenchmark.app.provider_registry import ProviderRegistry
@@ -194,7 +194,7 @@ def models(provider_name):
 
 @cli.command("capabilities")
 @click.argument("provider_name", required=False)
-def capabilities(provider_name):
+def capabilities(provider_name: str) -> None:
     """Show provider capabilities."""
     import aibenchmark.plugins  # noqa: F401
     from aibenchmark.app.provider_registry import ProviderRegistry
@@ -218,7 +218,7 @@ def capabilities(provider_name):
 
 @cli.command("auth")
 @click.argument("provider_name", required=False)
-def auth(provider_name):
+def auth(provider_name: str) -> None:
     """Validate authentication credentials."""
     import aibenchmark.plugins  # noqa: F401
     from aibenchmark.app.provider_registry import ProviderRegistry
@@ -238,7 +238,7 @@ def auth(provider_name):
 
 @provider.command("capabilities")
 @click.argument("provider_name", required=False)
-def provider_capabilities(provider_name):
+def provider_capabilities(provider_name: str) -> None:
     """Show provider capabilities."""
     import aibenchmark.plugins  # noqa: F401
     from aibenchmark.app.provider_registry import ProviderRegistry
@@ -262,7 +262,7 @@ def provider_capabilities(provider_name):
 
 @provider.command("validate")
 @click.argument("provider_name", required=False)
-def provider_validate(provider_name):
+def provider_validate(provider_name: str) -> None:
     """Run full provider validation and generate a report."""
     import aibenchmark.plugins  # noqa: F401
     from aibenchmark.app.provider_registry import ProviderRegistry
@@ -283,7 +283,7 @@ def provider_validate(provider_name):
 
 @provider.command("certify")
 @click.argument("provider_name", required=False)
-def provider_certify(provider_name):
+def provider_certify(provider_name: str) -> None:
     """Generate provider certification report."""
     import aibenchmark.plugins  # noqa: F401
     from aibenchmark.app.provider_registry import ProviderRegistry
@@ -303,7 +303,7 @@ def provider_certify(provider_name):
 
 
 @cli.command("discover")
-def discover():
+def discover() -> None:
     """Discover and list all plugins."""
     import aibenchmark.plugins  # noqa: F401
     from aibenchmark.app.plugin.registry import get_manager
@@ -326,13 +326,13 @@ def discover():
 
 
 @cli.group("plugin")
-def plugin_group():
+def plugin_group() -> None:
     """Plugin management commands."""
     pass
 
 
 @plugin_group.command("validate")
-def plugin_validate():
+def plugin_validate() -> None:
     """Validate all plugin metadata and API version compatibility."""
     import aibenchmark.plugins  # noqa: F401
     from aibenchmark.app.plugin.registry import validate_all_plugins
@@ -351,7 +351,7 @@ def plugin_validate():
 
 
 @plugin_group.command("list")
-def plugin_list():
+def plugin_list() -> None:
     """List plugins by category."""
     import aibenchmark.plugins  # noqa: F401
     from aibenchmark.app.plugin.registry import get_manager
@@ -671,7 +671,7 @@ def governance(out: str) -> None:
 
 @cli.command("route")
 @click.argument("benchmark_name", required=False)
-def route(benchmark_name):
+def route(benchmark_name: str) -> None:
     """Show routing plan for benchmark without executing."""
     import aibenchmark.plugins  # noqa: F401
     from aibenchmark.app.engine import BenchEngine
@@ -698,7 +698,7 @@ def route(benchmark_name):
 @click.argument("benchmark_name")
 @click.option("--provider", default=None)
 @click.option("--model", default=None)
-def select(benchmark_name, provider, model):
+def select(benchmark_name: str, provider: str, model: str) -> None:
     """Automatic model selection for category."""
     import aibenchmark.plugins  # noqa: F401
     from aibenchmark.app.engine import BenchEngine
@@ -721,7 +721,7 @@ def select(benchmark_name, provider, model):
 @cli.command("fallback")
 @click.argument("provider_name")
 @click.argument("model", required=False)
-def fallback(provider_name, model):
+def fallback(provider_name: str, model: str) -> None:
     """Test fallback chain for provider/model."""
     import aibenchmark.plugins  # noqa: F401
     from aibenchmark.app.engine import BenchEngine
@@ -740,7 +740,7 @@ def fallback(provider_name, model):
 @cli.command("optimize")
 @click.option("--benchmark", "-b", multiple=True, default=None)
 @click.option("--provider", default=None)
-def optimize(benchmark, provider):
+def optimize(benchmark: str, provider: str) -> None:
     """Cost-optimized benchmark execution preview."""
     import aibenchmark.plugins  # noqa: F401
     from aibenchmark.app.engine import BenchEngine
@@ -762,7 +762,7 @@ def optimize(benchmark, provider):
 @cli.command("parallel")
 @click.option("--providers", "-p", multiple=True, required=True)
 @click.option("--benchmark", "-b", multiple=True, default=None)
-def parallel(providers, benchmark):
+def parallel(providers: tuple[str, ...], benchmark: str) -> None:
     """Multi-provider parallel execution."""
     import aibenchmark.plugins  # noqa: F401
     from aibenchmark.app.engine import BenchEngine
@@ -786,13 +786,13 @@ def parallel(providers, benchmark):
 
 
 @cli.group("config")
-def config_group():
+def config_group() -> None:
     pass
 
 
 @config_group.command("generate-litellm")
 @click.option("--out", "-o", default="configs/litellm.yaml", show_default=True)
-def config_generate_litellm(out):
+def config_generate_litellm(out: str) -> None:
     """Generate LiteLLM configuration."""
     import aibenchmark.plugins  # noqa: F401
     from aibenchmark.app.engine import BenchEngine

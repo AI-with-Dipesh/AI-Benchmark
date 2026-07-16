@@ -115,9 +115,10 @@ class ModelSelector(BaseStrategy):
                 caps = self._registry.capabilities(provider_name)
             except ValueError:
                 continue
-            if getattr(caps, "context_window", None) is not None:
+            context_window = getattr(caps, "context_window", None)
+            if context_window is not None:
                 est_completion = max(prompt_tokens // 2, (getattr(caps, "max_output_tokens", None) or 0))
-                if prompt_tokens + est_completion > caps.context_window:
+                if prompt_tokens + est_completion > context_window:
                     continue
             models = self._registry.list_models(provider_name)
             if not models:
