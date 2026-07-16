@@ -372,7 +372,7 @@ Cost is estimated from configured token prices in `configs/benchmark.yaml` under
 
 ## Version
 
-Current version: `1.2.0`
+Current version: `1.3.0`
 
 ## Sprint History
 

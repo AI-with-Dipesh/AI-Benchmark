@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.3.0] - 2026-07-16
+
+Sprint 11 engineering quality improvements.
+
+- Reduce MyPy strict-mode errors from 35 to 0 across 70 source files.
+- Resolve TD-ResourceWarnings-9 via unconditional conn.close() in history.py.
+- Increase test coverage from 94% to 95.03%.
+- Add 28 new unit tests covering engine, analytics, history, and model_selector.
+- Remove deprecated ResourceWarning suppression from pyproject.toml.
+- Add CI coverage gate: fail_under = 95 under [tool.coverage.report].
+- Update fixture hygiene: HistoryWriter.reset(), conn.close() in test_sprint8_memory.
+
 ## [1.2.0] - 2026-07-16
 
 ### Added

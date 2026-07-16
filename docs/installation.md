@@ -71,5 +71,5 @@ python -m pip install --upgrade build
 python -m build
 
 # Install the local wheel
-pip install dist/aibenchmark-1.2.0-py3-none-any.whl
+pip install dist/aibenchmark-1.3.0-py3-none-any.whl
 ```
