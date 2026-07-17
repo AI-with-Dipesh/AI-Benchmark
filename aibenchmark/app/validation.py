@@ -51,7 +51,7 @@ def validate_metadata(result: BenchmarkResult) -> ValidationReport:
     for name, value in required:
         if not value:
             issues.append(ValidationIssue("critical", "metadata", f"Missing required field: {name}"))
-    if result.scores and not result.overall:
+    if result.scores and result.overall is None:
         issues.append(ValidationIssue("major", "scoring", "Overall score not calculated"))
     return ValidationReport(valid=not any(i.severity == "critical" for i in issues), issues=issues)
 

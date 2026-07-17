@@ -4,7 +4,7 @@ import logging
 from typing import Any
 
 from aibenchmark.app.config import AppConfig, ConfigError
-from aibenchmark.app.models import PluginCategory, ProviderCapabilities, RoutingContext, RoutingPlan
+from aibenchmark.app.models import BenchmarkName, PluginCategory, ProviderCapabilities, RoutingContext, RoutingPlan
 from aibenchmark.app.plugin.registry import register
 from aibenchmark.app.provider_health import get_health_tracker
 from aibenchmark.app.provider_registry import ProviderRegistry
@@ -30,10 +30,23 @@ class ModelSelector(BaseStrategy):
         return self.select(ctx).__dict__
 
     def select(self, context: RoutingContext) -> RoutingPlan:
+        benchmark_name = context.benchmark_name
+        if isinstance(benchmark_name, str):
+            benchmark_name = BenchmarkName(benchmark_name)
         strategy = self.config.routing.get("strategy", "cost_aware")
-        candidates = self._candidates(context)
+        ctx = RoutingContext(
+            benchmark_name=benchmark_name,
+            provider_name=context.provider_name,
+            model=context.model,
+            max_cost=context.max_cost,
+            required_capabilities=context.required_capabilities,
+            prefer_free=context.prefer_free,
+            min_capability_score=context.min_capability_score,
+            history_runs=context.history_runs,
+        )
+        candidates = self._candidates(ctx)
         if not candidates:
-            raise ConfigError(f"No eligible provider/model found for {context.benchmark_name.value}")
+            raise ConfigError(f"No eligible provider/model found for {benchmark_name.value}")
         if strategy == "cost_aware":
             plan = self._cost_aware(candidates, context)
         elif strategy == "capability_first":

@@ -1,5 +1,25 @@
 # Changelog
 
+## [2.0.0] - 2026-07-17
+
+### Added
+- Decision Engine: dynamic evidence-backed recommendations per task category.
+- Recommendation Engine: category-specific suggestions with confidence scoring, trade-offs, and rejection reasons.
+- Claude Code Routing Generator: automatic routing config generation from benchmark evidence.
+- Confidence Scoring: quantitative confidence with evidence quality weighting (High/Medium/Low).
+- Benchmark Explanation Engine: human-readable recommendation explanations via `benchmark explain` and `benchmark governance`.
+- Historical Trend Analysis: trend detection, comparison, stability tracking via `benchmark trends` and `benchmark compare`.
+- Provider Resilience: circuit breaker, retry with exponential backoff, rate limit detection.
+- Historical Storage: SQLite persistence with load/save verification.
+
+### Changed
+- Test count: 500 passed, 6 skipped, 0 failures.
+- Coverage: 95.11%.
+- Sprint 12.5 production-readiness validation completed.
+
+### Fixed
+- model_selector.py: normalize string `benchmark_name` to `BenchmarkName` enum in `select()` to prevent AttributeError when routing context uses string benchmark name.
+
 ## [1.3.0] - 2026-07-16
 
 Sprint 11 engineering quality improvements.

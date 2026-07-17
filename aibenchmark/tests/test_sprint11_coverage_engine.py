@@ -223,3 +223,192 @@ class TestAnalyticsUncoveredPaths:
         from aibenchmark.app.analytics import build_comparison
         deltas = build_comparison(run_a, run_b)
         assert isinstance(deltas, dict)
+
+
+# ============================================================
+# Sprint 11.5: Regression tests for benchmark scoring defects
+# ============================================================
+
+class TestScoreNormalizationPreservation:
+    """Regression tests for engine score reconstruction bug.
+
+    Bug: BenchEngine reconstructed Score from result.details, losing normalized
+    values because benchmark plugins store details as
+    {"raw_score": ..., **metadata} without "normalized".
+    This caused normalized=0.0 for all non-latency benchmarks.
+    """
+
+    def test_engine_preserves_benchmark_computed_normalized(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        engine = BenchEngine.__new__(BenchEngine)
+        engine.config = MagicMock()
+        engine.config.weight.return_value = 25.0
+        engine.config.run_defaults = {"temperature": 0.2, "top_p": 0.95, "seed": None}
+        engine.config.model_cost.return_value = (0.0, 0.0)
+        engine.config.prompt_version.return_value = "1.0"
+        engine.config.benchmark_version = "1.3.0"
+        engine.retry_policy = MagicMock(retry_count=0, backoff_factor=0)
+        engine.timeout_policy = MagicMock(request_timeout_seconds=60.0)
+        engine._health_tracker = MagicMock()
+
+        fake_response = MagicMock()
+        fake_response.latency_ms = 100.0
+        fake_response.tokens_in = 10
+        fake_response.tokens_out = 20
+        fake_response.model = "test-model"
+        fake_response.provider = MagicMock(value="openrouter")
+        provider = MagicMock()
+        provider.chat.return_value = fake_response
+        engine._init_provider = MagicMock(return_value=provider)
+        monkeypatch.setattr(engine, "_load_prompt", MagicMock(return_value={"system": "s", "user": "u"}))
+        engine.plugins = MagicMock()
+
+        original_score = Score(
+            benchmark=BenchmarkName.CODING,
+            raw=0.65,
+            normalized=0.82,
+            weight=1.0,
+        )
+        benchmark_result = BenchmarkResult(
+            model="test-model",
+            provider=MagicMock(value="openrouter"),
+            scores=[original_score],
+            details={"raw_score": 0.65, "syntax_ok": True},
+        )
+        benchmark_cls = MagicMock(return_value=MagicMock(run=MagicMock(return_value=benchmark_result)))
+        engine.plugins.get.return_value = benchmark_cls
+
+        result = engine.run_benchmark(
+            "openrouter", "test-model", BenchmarkName.CODING, [{"role": "user", "content": "hi"}]
+        )
+        assert len(result.scores) == 1
+        assert result.scores[0].normalized == 0.82, f"Expected normalized=0.82, got {result.scores[0].normalized}"
+        assert result.scores[0].raw == 0.65
+        assert result.scores[0].weight == 25.0
+        assert result.scores[0].weighted == pytest.approx(20.5)
+        assert result.overall == pytest.approx(20.5 / 25.0)
+
+    def test_engine_recalculates_overall_from_preserved_scores(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        engine = BenchEngine.__new__(BenchEngine)
+        engine.config = MagicMock()
+        engine.config.weight.return_value = 25.0
+        engine.config.run_defaults = {"temperature": 0.2, "top_p": 0.95, "seed": None}
+        engine.config.model_cost.return_value = (0.0, 0.0)
+        engine.config.prompt_version.return_value = "1.0"
+        engine.config.benchmark_version = "1.3.0"
+        engine.retry_policy = MagicMock(retry_count=0, backoff_factor=0)
+        engine.timeout_policy = MagicMock(request_timeout_seconds=60.0)
+        engine._health_tracker = MagicMock()
+
+        fake_response = MagicMock()
+        fake_response.latency_ms = 100.0
+        fake_response.tokens_in = 10
+        fake_response.tokens_out = 20
+        fake_response.model = "test-model"
+        fake_response.provider = MagicMock(value="openrouter")
+        provider = MagicMock()
+        provider.chat.return_value = fake_response
+        engine._init_provider = MagicMock(return_value=provider)
+        monkeypatch.setattr(engine, "_load_prompt", MagicMock(return_value={"system": "s", "user": "u"}))
+        engine.plugins = MagicMock()
+
+        original_score = Score(
+            benchmark=BenchmarkName.CODING,
+            raw=0.5,
+            normalized=0.75,
+            weight=1.0,
+        )
+        benchmark_result = BenchmarkResult(
+            model="test-model",
+            provider=MagicMock(value="openrouter"),
+            scores=[original_score],
+            details={"raw_score": 0.5},
+        )
+        benchmark_cls = MagicMock(return_value=MagicMock(run=MagicMock(return_value=benchmark_result)))
+        engine.plugins.get.return_value = benchmark_cls
+
+        result = engine.run_benchmark(
+            "openrouter", "test-model", BenchmarkName.CODING, [{"role": "user", "content": "hi"}]
+        )
+        # overall should equal normalized because there's only one score with weight=25
+        expected_overall = 0.75
+        assert result.overall == pytest.approx(expected_overall), (
+            f"Expected overall={expected_overall}, got {result.overall}"
+        )
+
+    def test_engine_fallback_reconstruction_when_scores_empty(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        engine = BenchEngine.__new__(BenchEngine)
+        engine.config = MagicMock()
+        engine.config.weight.return_value = 25.0
+        engine.config.run_defaults = {"temperature": 0.2, "top_p": 0.95, "seed": None}
+        engine.config.model_cost.return_value = (0.0, 0.0)
+        engine.config.prompt_version.return_value = "1.0"
+        engine.config.benchmark_version = "1.3.0"
+        engine.retry_policy = MagicMock(retry_count=0, backoff_factor=0)
+        engine.timeout_policy = MagicMock(request_timeout_seconds=60.0)
+        engine._health_tracker = MagicMock()
+
+        fake_response = MagicMock()
+        fake_response.latency_ms = 100.0
+        fake_response.tokens_in = 10
+        fake_response.tokens_out = 20
+        fake_response.model = "test-model"
+        fake_response.provider = MagicMock(value="openrouter")
+        provider = MagicMock()
+        provider.chat.return_value = fake_response
+        engine._init_provider = MagicMock(return_value=provider)
+        monkeypatch.setattr(engine, "_load_prompt", MagicMock(return_value={"system": "s", "user": "u"}))
+        engine.plugins = MagicMock()
+
+        # Benchmark plugin with empty scores but normalized in details
+        benchmark_result = BenchmarkResult(
+            model="test-model",
+            provider=MagicMock(value="openrouter"),
+            scores=[],
+            details={"raw_score": 0.7, "normalized": 0.85},
+        )
+        benchmark_cls = MagicMock(return_value=MagicMock(run=MagicMock(return_value=benchmark_result)))
+        engine.plugins.get.return_value = benchmark_cls
+
+        result = engine.run_benchmark(
+            "openrouter", "test-model", BenchmarkName.CODING, [{"role": "user", "content": "hi"}]
+        )
+        assert len(result.scores) == 1
+        assert result.scores[0].normalized == 0.85
+        assert result.scores[0].raw == 0.7
+
+
+class TestValidationFalsePositiveFix:
+    """Regression tests for validate_metadata zero-overall false positive.
+
+    Bug: validate_metadata used `not result.overall` which flagged valid
+    zero scores as "Overall score not calculated".
+    """
+
+    def test_validate_metadata_zero_overall_not_flagged(self) -> None:
+        from aibenchmark.app.validation import validate_metadata
+
+        result = BenchmarkResult(
+            model="test-model",
+            provider=ProviderType.OLLAMA,
+            scores=[Score(benchmark=BenchmarkName.CODING, raw=0.0, normalized=0.0, weight=1.0)],
+            overall=0.0,
+            metadata={"timestamp": "2026-01-01T00:00:00+00:00"},
+        )
+        report = validate_metadata(result)
+        scoring_issues = [i for i in report.issues if i.category == "scoring"]
+        assert len(scoring_issues) == 0, f"Expected no scoring issues for zero overall, got {scoring_issues}"
+
+    def test_validate_metadata_none_overall_is_flagged(self) -> None:
+        from aibenchmark.app.validation import validate_metadata
+
+        result = BenchmarkResult(
+            model="test-model",
+            provider=ProviderType.OLLAMA,
+            scores=[Score(benchmark=BenchmarkName.CODING, raw=0.0, normalized=0.0, weight=1.0)],
+            overall=None,
+            metadata={"timestamp": "2026-01-01T00:00:00+00:00"},
+        )
+        report = validate_metadata(result)
+        scoring_issues = [i for i in report.issues if i.category == "scoring"]
+        assert len(scoring_issues) == 1
+        assert "not calculated" in scoring_issues[0].message or "Overall" in scoring_issues[0].message

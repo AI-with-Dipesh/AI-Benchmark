@@ -206,7 +206,7 @@ def test_validate_metadata_missing_overall():
     result = BenchmarkResult(
         model="m",
         provider=ProviderType.OLLAMA,
-        scores=[Score(benchmark=BenchmarkName.GENERAL, raw=1.0, normalized=1.0, weight=1.0)],
+        scores=[Score(benchmark=BenchmarkName.GENERAL, raw=1.0, normalized=1.0, weight=1.0)], overall=None,
     )
     report = validate_metadata(result)
     assert any(issue.category == "scoring" for issue in report.issues)

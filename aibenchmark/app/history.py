@@ -157,9 +157,15 @@ def save_run(results: list[BenchmarkResult], details: dict[str, Any] | None = No
     init_db(conn)
     now = datetime.now(timezone.utc).isoformat()
     primary = results[0]
+    # Aggregate overall across all category results, not just the first result.
+    # Each per-benchmark result has one category score; the run overall must be
+    # the weighted average across all categories.
+    total_weight = sum(s.weight for r in results for s in r.scores)
+    weighted_sum = sum(s.weighted for r in results for s in r.scores)
+    aggregate_overall = weighted_sum / total_weight if total_weight else 0.0
     cur = conn.execute(
         "INSERT INTO runs (timestamp, provider, model, overall, benchmark_count) VALUES (?, ?, ?, ?, ?)",
-        (now, primary.provider.value, primary.model, primary.overall, len(results)),
+        (now, primary.provider.value, primary.model, aggregate_overall, len(results)),
     )
     run_id = int(cur.lastrowid or 0)
     for r in results:

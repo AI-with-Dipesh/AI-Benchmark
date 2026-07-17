@@ -371,13 +371,22 @@ class BenchEngine:
         result.metadata.setdefault("status", "success")
 
         weight = self.config.weight(benchmark_name_enum)
-        score = Score(
-            benchmark=benchmark_name_enum,
-            raw=result.details.get("raw_score", 0.0),
-            normalized=result.details.get("normalized", 0.0),
-            weight=weight,
-        )
-        result.scores = [score]
+        # Preserve the benchmark-computed score/normalized/weighted values.
+        # Benchmark plugins already construct Score with correct normalized/weighted;
+        # reconstructing from result.details loses normalized for most plugins.
+        if result.scores:
+            score = result.scores[0]
+            score.weight = weight
+            score.weighted = score.normalized * weight
+            result.scores = [score]
+        else:
+            score = Score(
+                benchmark=benchmark_name_enum,
+                raw=result.details.get("raw_score", 0.0),
+                normalized=result.details.get("normalized", 0.0),
+                weight=weight,
+            )
+            result.scores = [score]
         self._populate_metadata(result, response, benchmark_start, benchmark_name_enum)
         result.retry_count = attempt - 1
         result.timeout_status = timeout_status
