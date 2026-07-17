@@ -1,0 +1,96 @@
+routing:
+  strategy: cost_aware
+  fallback:
+    strategy: provider_first
+    chain:
+      - provider: ollama
+        model: llama3.2
+      - provider: openrouter
+        model: tencent/hy3:free
+  parallel:
+    enabled: false
+
+recommendations:
+  coding:
+    primary:
+      provider: openrouter
+      model: tencent/hy3:free
+      confidence: 0.86
+      evidence: Highest coding score (0.75) from latest benchmark evidence
+    fallback:
+      provider: ollama
+      model: llama3.2
+      reason: Local fallback when remote providers unavailable
+  research:
+    primary:
+      provider: openrouter
+      model: tencent/hy3:free
+      confidence: 0.86
+      evidence: Highest research score (0.86)
+    fallback:
+      provider: ollama
+      model: llama3.2
+  reasoning:
+    primary:
+      provider: openrouter
+      model: tencent/hy3:free
+      confidence: 0.75
+      evidence: Highest reasoning score (0.67)
+    fallback:
+      provider: ollama
+      model: llama3.2
+  debugging:
+    primary:
+      provider: openrouter
+      model: tencent/hy3:free
+      confidence: 0.42
+      evidence: Best available debugging score (0.12)
+    fallback:
+      provider: ollama
+      model: llama3.2
+  general:
+    primary:
+      provider: openrouter
+      model: tencent/hy3:free
+      confidence: 0.39
+      evidence: Best available general score (0.12)
+    fallback:
+      provider: ollama
+      model: llama3.2
+  code_review:
+    primary:
+      provider: openrouter
+      model: tencent/hy3:free
+      confidence: 0.70
+      evidence: Highest code review score (0.64)
+    fallback:
+      provider: ollama
+      model: llama3.2
+  instruction:
+    primary:
+      provider: openrouter
+      model: tencent/hy3:free
+      confidence: 0.38
+      evidence: Best available instruction score (0.04)
+    fallback:
+      provider: ollama
+      model: llama3.2
+  json:
+    primary:
+      provider: openrouter
+      model: tencent/hy3:free
+      confidence: 0.25
+      evidence: None (score 0.0)
+    fallback:
+      provider: ollama
+      model: llama3.2
+
+claude_code:
+  router: aibenchmark
+  default_model: tencent/hy3:free
+  default_provider: openrouter
+  fallback_provider: ollama
+  fallback_model: llama3.2
+  reasoning: Dynamically selected from benchmark evidence via model_selector strategy
+  confidence: dynamic per category
+  evidence: attached per recommendation

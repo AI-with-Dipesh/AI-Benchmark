@@ -1,0 +1,81 @@
+[
+  {
+    "benchmark": "tencent/hy3:free",
+    "model": "tencent/hy3:free",
+    "provider": "openrouter",
+    "overall": 0.5239675101919289,
+    "scores": [
+      {
+        "benchmark": "coding",
+        "raw": 0.7500000000000001,
+        "normalized": 0.7500000000000001,
+        "weight": 25.0,
+        "weighted": 18.750000000000004
+      },
+      {
+        "benchmark": "debugging",
+        "raw": 0.12,
+        "normalized": 0.12,
+        "weight": 20.0,
+        "weighted": 2.4
+      },
+      {
+        "benchmark": "general",
+        "raw": 0.12133333333333335,
+        "normalized": 0.12133333333333335,
+        "weight": 5.0,
+        "weighted": 0.6066666666666667
+      },
+      {
+        "benchmark": "instruction",
+        "raw": 0.03888888888888888,
+        "normalized": 0.03888888888888888,
+        "weight": 5.0,
+        "weighted": 0.19444444444444442
+      },
+      {
+        "benchmark": "json",
+        "raw": 0.0,
+        "normalized": 0.0,
+        "weight": 5.0,
+        "weighted": 0.0
+      },
+      {
+        "benchmark": "latency",
+        "raw": 1887.029994999466,
+        "normalized": 0.6225940010001068,
+        "weight": 10.0,
+        "weighted": 6.225940010001068
+      },
+      {
+        "benchmark": "reasoning",
+        "raw": 0.6737500000000001,
+        "normalized": 0.6737500000000001,
+        "weight": 15.0,
+        "weighted": 10.106250000000001
+      },
+      {
+        "benchmark": "research",
+        "raw": 0.8625,
+        "normalized": 0.8625,
+        "weight": 15.0,
+        "weighted": 12.9375
+      },
+      {
+        "benchmark": "code_review",
+        "raw": 0.6415625,
+        "normalized": 0.6415625,
+        "weight": 10.0,
+        "weighted": 6.415625
+      }
+    ],
+    "evaluation": null,
+    "recommendations": null,
+    "metadata": {
+      "timestamp": "2026-07-17T05:53:14.289724+00:00",
+      "status": "success",
+      "latency_ms": 6279.993881000337
+    },
+    "details": {}
+  }
+]

@@ -1,0 +1,204 @@
+[
+  {
+    "run_id": 16,
+    "timestamp": "2026-07-12T17:03:36.046161+00:00",
+    "provider": "ollama",
+    "model": "demo",
+    "stored_overall": 0.0,
+    "corrected_overall": 0.8,
+    "benchmark_count": 1,
+    "total_weight": 1.0,
+    "weighted_sum": 0.8,
+    "scores": {
+      "coding": {
+        "raw": 0.8,
+        "normalized": 0.8,
+        "weight": 1.0,
+        "weighted": 0.8
+      }
+    }
+  },
+  {
+    "run_id": 17,
+    "timestamp": "2026-07-13T06:07:26.353373+00:00",
+    "provider": "ollama",
+    "model": "m",
+    "stored_overall": 0.85,
+    "corrected_overall": 0.85,
+    "benchmark_count": 1,
+    "total_weight": 2.0,
+    "weighted_sum": 1.7,
+    "scores": {
+      "coding": {
+        "raw": 0.8,
+        "normalized": 0.8,
+        "weight": 1.0,
+        "weighted": 0.8
+      },
+      "reasoning": {
+        "raw": 0.9,
+        "normalized": 0.9,
+        "weight": 1.0,
+        "weighted": 0.9
+      }
+    }
+  },
+  {
+    "run_id": 23,
+    "timestamp": "2026-07-17T05:22:36.675987+00:00",
+    "provider": "openrouter",
+    "model": "qwen/qwen3-coder:free",
+    "stored_overall": 0.0,
+    "corrected_overall": 0.0,
+    "benchmark_count": 1,
+    "total_weight": 0,
+    "weighted_sum": 0,
+    "scores": {}
+  },
+  {
+    "run_id": 30,
+    "timestamp": "2026-07-17T05:59:10.229980+00:00",
+    "provider": "openrouter",
+    "model": "cohere/north-mini-code:free",
+    "stored_overall": 0.0,
+    "corrected_overall": 0.0,
+    "benchmark_count": 9,
+    "total_weight": 0,
+    "weighted_sum": 0,
+    "scores": {}
+  },
+  {
+    "run_id": 29,
+    "timestamp": "2026-07-17T05:53:14.292203+00:00",
+    "provider": "openrouter",
+    "model": "tencent/hy3:free",
+    "stored_overall": 0.7500000000000001,
+    "corrected_overall": 0.524,
+    "benchmark_count": 9,
+    "total_weight": 110.0,
+    "weighted_sum": 57.6364,
+    "scores": {
+      "coding": {
+        "raw": 0.75,
+        "normalized": 0.75,
+        "weight": 25.0,
+        "weighted": 18.75
+      },
+      "debugging": {
+        "raw": 0.12,
+        "normalized": 0.12,
+        "weight": 20.0,
+        "weighted": 2.4
+      },
+      "general": {
+        "raw": 0.1213,
+        "normalized": 0.1213,
+        "weight": 5.0,
+        "weighted": 0.6067
+      },
+      "instruction": {
+        "raw": 0.0389,
+        "normalized": 0.0389,
+        "weight": 5.0,
+        "weighted": 0.1944
+      },
+      "json": {
+        "raw": 0.0,
+        "normalized": 0.0,
+        "weight": 5.0,
+        "weighted": 0.0
+      },
+      "latency": {
+        "raw": 1887.03,
+        "normalized": 0.6226,
+        "weight": 10.0,
+        "weighted": 6.2259
+      },
+      "reasoning": {
+        "raw": 0.6738,
+        "normalized": 0.6738,
+        "weight": 15.0,
+        "weighted": 10.1063
+      },
+      "research": {
+        "raw": 0.8625,
+        "normalized": 0.8625,
+        "weight": 15.0,
+        "weighted": 12.9375
+      },
+      "code_review": {
+        "raw": 0.6416,
+        "normalized": 0.6416,
+        "weight": 10.0,
+        "weighted": 6.4156
+      }
+    }
+  },
+  {
+    "run_id": 27,
+    "timestamp": "2026-07-17T05:36:58.803557+00:00",
+    "provider": "openrouter",
+    "model": "openrouter/free",
+    "stored_overall": 0.0,
+    "corrected_overall": 0.0582,
+    "benchmark_count": 9,
+    "total_weight": 110.0,
+    "weighted_sum": 6.3996,
+    "scores": {
+      "coding": {
+        "raw": 0.6,
+        "normalized": 0.0,
+        "weight": 25.0,
+        "weighted": 0.0
+      },
+      "debugging": {
+        "raw": 0.12,
+        "normalized": 0.0,
+        "weight": 20.0,
+        "weighted": 0.0
+      },
+      "general": {
+        "raw": 0.3653,
+        "normalized": 0.0,
+        "weight": 5.0,
+        "weighted": 0.0
+      },
+      "instruction": {
+        "raw": 0.0389,
+        "normalized": 0.0,
+        "weight": 5.0,
+        "weighted": 0.0
+      },
+      "json": {
+        "raw": 0.0,
+        "normalized": 0.0,
+        "weight": 5.0,
+        "weighted": 0.0
+      },
+      "latency": {
+        "raw": 0.0,
+        "normalized": 0.64,
+        "weight": 10.0,
+        "weighted": 6.3996
+      },
+      "reasoning": {
+        "raw": 0.7367,
+        "normalized": 0.0,
+        "weight": 15.0,
+        "weighted": 0.0
+      },
+      "research": {
+        "raw": 0.633,
+        "normalized": 0.0,
+        "weight": 15.0,
+        "weighted": 0.0
+      },
+      "code_review": {
+        "raw": 0.3808,
+        "normalized": 0.0,
+        "weight": 10.0,
+        "weighted": 0.0
+      }
+    }
+  }
+]

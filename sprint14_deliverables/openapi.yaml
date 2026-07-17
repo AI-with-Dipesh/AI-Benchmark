@@ -1,0 +1,1482 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "AI-Benchmark API",
+    "description": "Programmatic API for LLM benchmarking, routing, and analytics",
+    "contact": {
+      "name": "AI-Benchmark Team"
+    },
+    "license": {
+      "name": "MIT",
+      "url": "https://opensource.org/licenses/MIT"
+    },
+    "version": "2.1.0"
+  },
+  "paths": {
+    "/api/v1/system/health": {
+      "get": {
+        "tags": [
+          "system"
+        ],
+        "summary": "Health",
+        "operationId": "health_api_v1_system_health_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DetailedHealthResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/system/version": {
+      "get": {
+        "tags": [
+          "system"
+        ],
+        "summary": "Version",
+        "operationId": "version_api_v1_system_version_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VersionResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/system/diagnostics": {
+      "get": {
+        "tags": [
+          "system"
+        ],
+        "summary": "Diagnostics",
+        "operationId": "diagnostics_api_v1_system_diagnostics_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Diagnostics Api V1 System Diagnostics Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/providers/": {
+      "get": {
+        "tags": [
+          "providers"
+        ],
+        "summary": "List Providers",
+        "operationId": "list_providers_api_v1_providers__get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProviderListResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/providers/models": {
+      "get": {
+        "tags": [
+          "providers"
+        ],
+        "summary": "List All Models",
+        "operationId": "list_all_models_api_v1_providers_models_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": {
+                    "items": {
+                      "type": "string"
+                    },
+                    "type": "array"
+                  },
+                  "type": "object",
+                  "title": "Response List All Models Api V1 Providers Models Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/providers/models/refresh": {
+      "post": {
+        "tags": [
+          "providers"
+        ],
+        "summary": "Refresh Models",
+        "operationId": "refresh_models_api_v1_providers_models_refresh_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProviderRefreshRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Refresh Models Api V1 Providers Models Refresh Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/benchmarks/": {
+      "get": {
+        "tags": [
+          "benchmarks"
+        ],
+        "summary": "List Benchmarks",
+        "operationId": "list_benchmarks_api_v1_benchmarks__get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BenchmarkListResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/benchmarks/run": {
+      "post": {
+        "tags": [
+          "benchmarks"
+        ],
+        "summary": "Run Benchmark",
+        "operationId": "run_benchmark_api_v1_benchmarks_run_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BenchmarkRunRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BenchmarkResultResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/benchmarks/history": {
+      "get": {
+        "tags": [
+          "benchmarks"
+        ],
+        "summary": "Benchmark History",
+        "operationId": "benchmark_history_api_v1_benchmarks_history_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Benchmark History Api V1 Benchmarks History Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/benchmarks/results/{result_id}": {
+      "get": {
+        "tags": [
+          "benchmarks"
+        ],
+        "summary": "Get Result",
+        "operationId": "get_result_api_v1_benchmarks_results__result_id__get",
+        "parameters": [
+          {
+            "name": "result_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Result Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Get Result Api V1 Benchmarks Results  Result Id  Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/recommendations/": {
+      "post": {
+        "tags": [
+          "recommendations"
+        ],
+        "summary": "Generate Recommendations",
+        "operationId": "generate_recommendations_api_v1_recommendations__post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RecommendationRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RecommendationResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/routing/": {
+      "post": {
+        "tags": [
+          "routing"
+        ],
+        "summary": "Route",
+        "operationId": "route_api_v1_routing__post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RoutingRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RoutingResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/analytics/leaderboard": {
+      "get": {
+        "tags": [
+          "analytics"
+        ],
+        "summary": "Leaderboard",
+        "operationId": "leaderboard_api_v1_analytics_leaderboard_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LeaderboardResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/analytics/trends": {
+      "get": {
+        "tags": [
+          "analytics"
+        ],
+        "summary": "Trends",
+        "operationId": "trends_api_v1_analytics_trends_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TrendResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/analytics/history": {
+      "get": {
+        "tags": [
+          "analytics"
+        ],
+        "summary": "History",
+        "operationId": "history_api_v1_analytics_history_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response History Api V1 Analytics History Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/reports/generate": {
+      "post": {
+        "tags": [
+          "reports"
+        ],
+        "summary": "Generate Reports",
+        "operationId": "generate_reports_api_v1_reports_generate_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReportGenerateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReportResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/reports/{report_id}": {
+      "get": {
+        "tags": [
+          "reports"
+        ],
+        "summary": "Get Report",
+        "operationId": "get_report_api_v1_reports__report_id__get",
+        "parameters": [
+          {
+            "name": "report_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Report Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Get Report Api V1 Reports  Report Id  Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/config/": {
+      "get": {
+        "tags": [
+          "config"
+        ],
+        "summary": "Get Config",
+        "operationId": "get_config_api_v1_config__get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConfigResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "config"
+        ],
+        "summary": "Patch Config",
+        "operationId": "patch_config_api_v1_config__patch",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ConfigPatchRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Patch Config Api V1 Config  Patch"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "BenchmarkListResponse": {
+        "properties": {
+          "benchmarks": {
+            "items": {
+              "$ref": "#/components/schemas/BenchmarkSummary"
+            },
+            "type": "array",
+            "title": "Benchmarks"
+          },
+          "total": {
+            "type": "integer",
+            "title": "Total"
+          }
+        },
+        "type": "object",
+        "required": [
+          "benchmarks",
+          "total"
+        ],
+        "title": "BenchmarkListResponse"
+      },
+      "BenchmarkResultResponse": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "provider": {
+            "type": "string",
+            "title": "Provider"
+          },
+          "model": {
+            "type": "string",
+            "title": "Model"
+          },
+          "overall": {
+            "type": "number",
+            "title": "Overall"
+          },
+          "scores": {
+            "items": {
+              "$ref": "#/components/schemas/BenchmarkScoreSchema"
+            },
+            "type": "array",
+            "title": "Scores"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status",
+            "default": "success"
+          },
+          "timestamp": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Timestamp"
+          },
+          "latency_ms": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Latency Ms"
+          },
+          "retry_count": {
+            "type": "integer",
+            "title": "Retry Count",
+            "default": 0
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "provider",
+          "model",
+          "overall"
+        ],
+        "title": "BenchmarkResultResponse"
+      },
+      "BenchmarkRunRequest": {
+        "properties": {
+          "provider_name": {
+            "type": "string",
+            "title": "Provider Name"
+          },
+          "model": {
+            "type": "string",
+            "title": "Model"
+          },
+          "benchmarks": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Benchmarks"
+          },
+          "messages": {
+            "anyOf": [
+              {
+                "items": {
+                  "additionalProperties": true,
+                  "type": "object"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Messages"
+          },
+          "fallback_enabled": {
+            "type": "boolean",
+            "title": "Fallback Enabled",
+            "default": true
+          }
+        },
+        "type": "object",
+        "required": [
+          "provider_name",
+          "model"
+        ],
+        "title": "BenchmarkRunRequest"
+      },
+      "BenchmarkScoreSchema": {
+        "properties": {
+          "benchmark": {
+            "type": "string",
+            "title": "Benchmark"
+          },
+          "raw": {
+            "type": "number",
+            "title": "Raw"
+          },
+          "normalized": {
+            "type": "number",
+            "title": "Normalized"
+          },
+          "weight": {
+            "type": "number",
+            "title": "Weight"
+          },
+          "weighted": {
+            "type": "number",
+            "title": "Weighted"
+          }
+        },
+        "type": "object",
+        "required": [
+          "benchmark",
+          "raw",
+          "normalized",
+          "weight",
+          "weighted"
+        ],
+        "title": "BenchmarkScoreSchema"
+      },
+      "BenchmarkSummary": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "category": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Category"
+          },
+          "weight": {
+            "type": "number",
+            "title": "Weight",
+            "default": 1.0
+          }
+        },
+        "type": "object",
+        "required": [
+          "name"
+        ],
+        "title": "BenchmarkSummary"
+      },
+      "ConfigPatchRequest": {
+        "properties": {
+          "weights": {
+            "anyOf": [
+              {
+                "additionalProperties": {
+                  "type": "number"
+                },
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Weights"
+          },
+          "routing": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Routing"
+          },
+          "run_defaults": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Run Defaults"
+          }
+        },
+        "type": "object",
+        "title": "ConfigPatchRequest"
+      },
+      "ConfigResponse": {
+        "properties": {
+          "benchmark_version": {
+            "type": "string",
+            "title": "Benchmark Version"
+          },
+          "providers": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Providers"
+          },
+          "weights": {
+            "additionalProperties": {
+              "type": "number"
+            },
+            "type": "object",
+            "title": "Weights"
+          },
+          "routing": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Routing"
+          },
+          "timeouts": {
+            "anyOf": [
+              {
+                "additionalProperties": {
+                  "type": "number"
+                },
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Timeouts"
+          },
+          "retry": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Retry"
+          }
+        },
+        "type": "object",
+        "required": [
+          "benchmark_version"
+        ],
+        "title": "ConfigResponse"
+      },
+      "DetailedHealthResponse": {
+        "properties": {
+          "status": {
+            "type": "string",
+            "title": "Status",
+            "default": "healthy"
+          },
+          "version": {
+            "type": "string",
+            "title": "Version"
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Timestamp"
+          },
+          "provider_count": {
+            "type": "integer",
+            "title": "Provider Count",
+            "default": 0
+          },
+          "benchmark_count": {
+            "type": "integer",
+            "title": "Benchmark Count",
+            "default": 0
+          },
+          "authenticated_providers": {
+            "type": "integer",
+            "title": "Authenticated Providers",
+            "default": 0
+          },
+          "missing_api_credentials": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Missing Api Credentials",
+            "default": []
+          }
+        },
+        "type": "object",
+        "required": [
+          "version"
+        ],
+        "title": "DetailedHealthResponse"
+      },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "type": "array",
+            "title": "Detail"
+          }
+        },
+        "type": "object",
+        "title": "HTTPValidationError"
+      },
+      "LeaderboardEntry": {
+        "properties": {
+          "rank": {
+            "type": "integer",
+            "title": "Rank"
+          },
+          "model": {
+            "type": "string",
+            "title": "Model"
+          },
+          "provider": {
+            "type": "string",
+            "title": "Provider"
+          },
+          "overall": {
+            "type": "number",
+            "title": "Overall"
+          },
+          "category_scores": {
+            "additionalProperties": {
+              "type": "number"
+            },
+            "type": "object",
+            "title": "Category Scores"
+          }
+        },
+        "type": "object",
+        "required": [
+          "rank",
+          "model",
+          "provider",
+          "overall"
+        ],
+        "title": "LeaderboardEntry"
+      },
+      "LeaderboardResponse": {
+        "properties": {
+          "entries": {
+            "items": {
+              "$ref": "#/components/schemas/LeaderboardEntry"
+            },
+            "type": "array",
+            "title": "Entries"
+          },
+          "generated_at": {
+            "type": "string",
+            "title": "Generated At"
+          },
+          "runs_analyzed": {
+            "type": "integer",
+            "title": "Runs Analyzed",
+            "default": 0
+          }
+        },
+        "type": "object",
+        "required": [
+          "entries",
+          "generated_at"
+        ],
+        "title": "LeaderboardResponse"
+      },
+      "ProviderListResponse": {
+        "properties": {
+          "providers": {
+            "items": {
+              "$ref": "#/components/schemas/ProviderSummary"
+            },
+            "type": "array",
+            "title": "Providers"
+          },
+          "total": {
+            "type": "integer",
+            "title": "Total"
+          }
+        },
+        "type": "object",
+        "required": [
+          "providers",
+          "total"
+        ],
+        "title": "ProviderListResponse"
+      },
+      "ProviderRefreshRequest": {
+        "properties": {
+          "provider": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Provider"
+          },
+          "force": {
+            "type": "boolean",
+            "title": "Force",
+            "default": false
+          }
+        },
+        "type": "object",
+        "title": "ProviderRefreshRequest"
+      },
+      "ProviderSummary": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "authenticated": {
+            "type": "boolean",
+            "title": "Authenticated"
+          },
+          "model_count": {
+            "type": "integer",
+            "title": "Model Count",
+            "default": 0
+          },
+          "status": {
+            "type": "string",
+            "title": "Status",
+            "default": "unknown"
+          }
+        },
+        "type": "object",
+        "required": [
+          "name",
+          "authenticated"
+        ],
+        "title": "ProviderSummary"
+      },
+      "RecommendationItem": {
+        "properties": {
+          "category": {
+            "type": "string",
+            "title": "Category"
+          },
+          "model": {
+            "type": "string",
+            "title": "Model"
+          },
+          "provider": {
+            "type": "string",
+            "title": "Provider"
+          },
+          "confidence": {
+            "type": "number",
+            "title": "Confidence"
+          },
+          "confidence_label": {
+            "type": "string",
+            "title": "Confidence Label"
+          },
+          "reasons": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Reasons"
+          },
+          "score": {
+            "type": "number",
+            "title": "Score",
+            "default": 0.0
+          }
+        },
+        "type": "object",
+        "required": [
+          "category",
+          "model",
+          "provider",
+          "confidence",
+          "confidence_label"
+        ],
+        "title": "RecommendationItem"
+      },
+      "RecommendationRequest": {
+        "properties": {
+          "runs": {
+            "type": "integer",
+            "title": "Runs",
+            "default": 1
+          },
+          "categories": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Categories"
+          }
+        },
+        "type": "object",
+        "title": "RecommendationRequest"
+      },
+      "RecommendationResponse": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/RecommendationItem"
+            },
+            "type": "array",
+            "title": "Items"
+          },
+          "generated_at": {
+            "type": "string",
+            "title": "Generated At"
+          },
+          "source_runs": {
+            "type": "integer",
+            "title": "Source Runs",
+            "default": 0
+          }
+        },
+        "type": "object",
+        "required": [
+          "items",
+          "generated_at"
+        ],
+        "title": "RecommendationResponse"
+      },
+      "ReportGenerateRequest": {
+        "properties": {
+          "result_ids": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Result Ids"
+          },
+          "formats": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Formats"
+          },
+          "out_dir": {
+            "type": "string",
+            "title": "Out Dir",
+            "default": "reports"
+          }
+        },
+        "type": "object",
+        "title": "ReportGenerateRequest"
+      },
+      "ReportResponse": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "formats": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Formats"
+          },
+          "files": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "type": "object",
+            "title": "Files"
+          },
+          "created_at": {
+            "type": "string",
+            "title": "Created At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "created_at"
+        ],
+        "title": "ReportResponse"
+      },
+      "RoutingRequest": {
+        "properties": {
+          "benchmark_name": {
+            "type": "string",
+            "title": "Benchmark Name"
+          },
+          "provider_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Provider Name"
+          },
+          "model": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Model"
+          },
+          "max_cost": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Max Cost"
+          },
+          "prefer_free": {
+            "type": "boolean",
+            "title": "Prefer Free",
+            "default": false
+          },
+          "required_capabilities": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Required Capabilities"
+          }
+        },
+        "type": "object",
+        "required": [
+          "benchmark_name"
+        ],
+        "title": "RoutingRequest"
+      },
+      "RoutingResponse": {
+        "properties": {
+          "provider": {
+            "type": "string",
+            "title": "Provider"
+          },
+          "model": {
+            "type": "string",
+            "title": "Model"
+          },
+          "estimated_cost": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Estimated Cost"
+          },
+          "rationale": {
+            "type": "string",
+            "title": "Rationale",
+            "default": ""
+          },
+          "fallback_providers": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Fallback Providers"
+          },
+          "fallback_models": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Fallback Models"
+          }
+        },
+        "type": "object",
+        "required": [
+          "provider",
+          "model"
+        ],
+        "title": "RoutingResponse"
+      },
+      "TrendPoint": {
+        "properties": {
+          "timestamp": {
+            "type": "string",
+            "title": "Timestamp"
+          },
+          "model": {
+            "type": "string",
+            "title": "Model"
+          },
+          "provider": {
+            "type": "string",
+            "title": "Provider"
+          },
+          "overall": {
+            "type": "number",
+            "title": "Overall"
+          },
+          "benchmark_count": {
+            "type": "integer",
+            "title": "Benchmark Count",
+            "default": 0
+          }
+        },
+        "type": "object",
+        "required": [
+          "timestamp",
+          "model",
+          "provider",
+          "overall"
+        ],
+        "title": "TrendPoint"
+      },
+      "TrendResponse": {
+        "properties": {
+          "trends": {
+            "items": {
+              "$ref": "#/components/schemas/TrendPoint"
+            },
+            "type": "array",
+            "title": "Trends"
+          },
+          "generated_at": {
+            "type": "string",
+            "title": "Generated At"
+          },
+          "runs_analyzed": {
+            "type": "integer",
+            "title": "Runs Analyzed",
+            "default": 0
+          }
+        },
+        "type": "object",
+        "required": [
+          "trends",
+          "generated_at"
+        ],
+        "title": "TrendResponse"
+      },
+      "ValidationError": {
+        "properties": {
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "type": "array",
+            "title": "Location"
+          },
+          "msg": {
+            "type": "string",
+            "title": "Message"
+          },
+          "type": {
+            "type": "string",
+            "title": "Error Type"
+          },
+          "input": {
+            "title": "Input"
+          },
+          "ctx": {
+            "type": "object",
+            "title": "Context"
+          }
+        },
+        "type": "object",
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "title": "ValidationError"
+      },
+      "VersionResponse": {
+        "properties": {
+          "version": {
+            "type": "string",
+            "title": "Version"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name",
+            "default": "AI-Benchmark"
+          },
+          "api_version": {
+            "type": "string",
+            "title": "Api Version",
+            "default": "v1"
+          }
+        },
+        "type": "object",
+        "required": [
+          "version"
+        ],
+        "title": "VersionResponse"
+      }
+    }
+  }
+}

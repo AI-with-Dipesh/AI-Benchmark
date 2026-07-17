@@ -12,16 +12,19 @@ from aibenchmark.app.provider_health import get_health_tracker
 
 if TYPE_CHECKING:
     from aibenchmark.app.certification import ProviderCertificationReport
+from aibenchmark.app.provider_cache import ModelCache
+from pathlib import Path
 
 logger = logging.getLogger(__name__)
 
 
 class ProviderRegistry:
-    def __init__(self) -> None:
+    def __init__(self, cache_path: str | Path | None = None, cache_ttl: int = 3600) -> None:
         import aibenchmark.plugins  # noqa: F401 - trigger built-in registration
         self._manager = get_manager()
         self.capability_detector = ProviderCapabilityDetector()
         self.health_tracker = get_health_tracker()
+        self.model_cache = ModelCache(Path(cache_path) if cache_path else None, ttl=cache_ttl)
 
     def list_providers(self) -> list[str]:
         return self._manager.list_names(PluginCategory.PROVIDER)
@@ -88,15 +91,29 @@ class ProviderRegistry:
         plugin = self.get_plugin(provider_name)
         if plugin is None:
             raise ValueError(f"Unknown provider: {provider_name}")
+        live_models: list[str] = []
         try:
             instance = self._safe_init(plugin)
             models = instance.list_models()
             if isinstance(models, list):
-                return models
-            return list(models)
+                live_models = [str(m) for m in models]
+            else:
+                live_models = [str(m) for m in models]
         except Exception as exc:
             logger.debug("list_models for %s failed: %s", provider_name, exc)
-            return []
+
+        if live_models:
+            # Live success: update cache, return live results
+            self.model_cache.set(provider_name, live_models)
+            return live_models
+
+        # Live failed: fall back to cache
+        cached = self.model_cache.get(provider_name)
+        if cached:
+            logger.info("Using cached model list for %s (%d models)", provider_name, len(cached))
+            return cached
+
+        return []
 
     def validate_configuration(self, provider_name: str) -> dict[str, Any]:
         plugin = self.get_plugin(provider_name)

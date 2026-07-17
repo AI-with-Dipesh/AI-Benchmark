@@ -1,0 +1,94 @@
+# Statistical Summary
+
+## Run 1
+
+No results.
+
+## Run 2
+
+### code_review
+
+- Mean: 0.6416
+- Median: 0.6416
+- Std Dev: 0.0000
+- CV: 0.0000
+- 95% CI: 0.6416 - 0.6416
+
+### coding
+
+- Mean: 0.7500
+- Median: 0.7500
+- Std Dev: 0.0000
+- CV: 0.0000
+- 95% CI: 0.7500 - 0.7500
+
+### debugging
+
+- Mean: 0.1200
+- Median: 0.1200
+- Std Dev: 0.0000
+- CV: 0.0000
+- 95% CI: 0.1200 - 0.1200
+
+### general
+
+- Mean: 0.1213
+- Median: 0.1213
+- Std Dev: 0.0000
+- CV: 0.0000
+- 95% CI: 0.1213 - 0.1213
+
+### instruction
+
+- Mean: 0.0389
+- Median: 0.0389
+- Std Dev: 0.0000
+- CV: 0.0000
+- 95% CI: 0.0389 - 0.0389
+
+### json
+
+- Mean: 0.0000
+- Median: 0.0000
+- Std Dev: 0.0000
+- CV: 0.0000
+- 95% CI: 0.0000 - 0.0000
+
+### latency
+
+- Mean: 0.6226
+- Median: 0.6226
+- Std Dev: 0.0000
+- CV: 0.0000
+- 95% CI: 0.6226 - 0.6226
+
+### reasoning
+
+- Mean: 0.6738
+- Median: 0.6738
+- Std Dev: 0.0000
+- CV: 0.0000
+- 95% CI: 0.6738 - 0.6738
+
+### research
+
+- Mean: 0.8625
+- Median: 0.8625
+- Std Dev: 0.0000
+- CV: 0.0000
+- 95% CI: 0.8625 - 0.8625
+
+## Run 3
+
+### coding
+
+- Mean: 0.7000
+- Median: 0.7000
+- Std Dev: 0.0000
+- CV: 0.0000
+- 95% CI: 0.7000 - 0.7000
+
+## Cross-Run Metrics
+
+- openrouter:tencent/hy3:free score drift: -0.1760
+

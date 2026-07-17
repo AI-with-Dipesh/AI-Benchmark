@@ -4,7 +4,7 @@ import logging
 import time
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from aibenchmark.app.config import AppConfig, ConfigError
 from aibenchmark.app.models import (
@@ -17,6 +17,9 @@ from aibenchmark.app.models import (
     Score,
 )
 from aibenchmark.app.plugin.registry import get_manager
+
+if TYPE_CHECKING:
+    from aibenchmark.app.provider_registry import ProviderRegistry
 
 logger = logging.getLogger(__name__)
 
@@ -36,6 +39,73 @@ class BenchEngine:
             raise RuntimeError(f"Benchmark configuration failed: {exc}") from exc
         self.retry_policy = self.config.retry
         self.timeout_policy = self.config.timeouts
+        self._startup_diagnostics: dict[str, Any] = {}
+
+    def _collect_diagnostics(self) -> dict[str, Any]:
+        registry = self._registry()
+        provider_names = registry.list_providers()
+        configured = set(self.config.providers.keys()) - {"defaults"}
+        discovered = set(provider_names)
+        registered_but_not_in_config = discovered - configured
+        in_config_but_not_discovered = configured - discovered
+
+        auth_info: dict[str, dict[str, Any]] = {}
+        missing_keys: list[str] = []
+        for name in sorted(configured):
+            cfg = self.config.provider_config(name)
+            api_key = str(cfg.get("api_key", "") or "")
+            api_key_env = str(cfg.get("api_key_env", "") or "API_KEY")
+            if not api_key:
+                missing_keys.append(f"{name} (set {api_key_env})")
+            auth_info[name] = {
+                "api_key_env": api_key_env,
+                "api_key_set": bool(api_key),
+                "base_url": str(cfg.get("base_url", "") or ""),
+            }
+
+        cache_stats = registry.model_cache.stats()
+
+        self._startup_diagnostics = {
+            "configured_providers": sorted(configured),
+            "discovered_providers": provider_names,
+            "registered_but_not_in_config": sorted(registered_but_not_in_config),
+            "in_config_but_not_discovered": sorted(in_config_but_not_discovered),
+            "authenticated_providers": sorted([n for n, info in auth_info.items() if info["api_key_set"]]),
+            "missing_api_credentials": missing_keys,
+            "cache_stats": cache_stats,
+            "benchmark_count": len(self.list_benchmarks()),
+            "reporter_count": len(self.list_reporters()),
+        }
+        return self._startup_diagnostics
+
+    def _registry(self) -> "ProviderRegistry":
+        from aibenchmark.app.provider_registry import ProviderRegistry
+        return ProviderRegistry()
+
+    def diagnostics_summary(self) -> str:
+        info = self._collect_diagnostics()
+        lines: list[str] = ["=== Startup Diagnostics ==="]
+        lines.append(f"Benchmarks loaded : {info['benchmark_count']}")
+        lines.append(f"Configured providers : {len(info['configured_providers'])}")
+        lines.append(f"Discovered providers: {len(info['discovered_providers'])}")
+        for name in info["discovered_providers"]:
+            lines.append(f"  - {name}")
+        if info["registered_but_not_in_config"]:
+            lines.append(f"Registered but not in config: {info['registered_but_not_in_config']}")
+        if info["in_config_but_not_discovered"]:
+            lines.append(f"In config but not discovered: {info['in_config_but_not_discovered']}")
+        lines.append(f"Authenticated providers : {len(info['authenticated_providers'])}")
+        for name in info["authenticated_providers"]:
+            lines.append(f"  - {name}")
+        if info["missing_api_credentials"]:
+            lines.append("Missing API credentials :")
+            for msg in info["missing_api_credentials"]:
+                lines.append(f"  - {msg}")
+        lines.append(f"Model cache : {info['cache_stats'].get('cached_providers', 0)} providers ({info['cache_stats'].get('path', 'unknown')})")
+        if info["missing_api_credentials"]:
+            lines.append("Actionable guidance:")
+            lines.append("  Set the environment variables listed above, then run `benchmark auth` to verify.")
+        return "\n".join(lines)
 
     def _get_strategy(self, category: PluginCategory, name: str) -> type | None:
         return self.plugins.get(category, name)

@@ -1,0 +1,42 @@
+[
+  {
+    "category": "coding",
+    "status": "failed",
+    "error": "No eligible provider/model found for coding"
+  },
+  {
+    "category": "debugging",
+    "status": "failed",
+    "error": "No eligible provider/model found for debugging"
+  },
+  {
+    "category": "reasoning",
+    "status": "failed",
+    "error": "No eligible provider/model found for reasoning"
+  },
+  {
+    "category": "research",
+    "status": "failed",
+    "error": "No eligible provider/model found for research"
+  },
+  {
+    "category": "json",
+    "status": "failed",
+    "error": "No eligible provider/model found for json"
+  },
+  {
+    "category": "general",
+    "status": "failed",
+    "error": "No eligible provider/model found for general"
+  },
+  {
+    "category": "instruction",
+    "status": "failed",
+    "error": "No eligible provider/model found for instruction"
+  },
+  {
+    "category": "code_review",
+    "status": "failed",
+    "error": "No eligible provider/model found for code_review"
+  }
+]

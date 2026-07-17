@@ -1,0 +1,9 @@
+# Reliability Report
+
+| Provider:Model | Success | Failure | Timeout | Retry | Avg Latency (ms) | P95 |
+|---|---|---|---|---|---|---|
+| openrouter:tencent/hy3:free | 3 | 0 | 0 | 0 | 6084.0 | 6972.8 |
+| openrouter:openrouter/free | 1 | 0 | 0 | 0 | 9513.2 | 9513.2 |
+
+Provider availability:
+- openrouter: 1.00

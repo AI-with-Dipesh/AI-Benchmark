@@ -102,6 +102,19 @@ def provider_list(provider_name: str) -> None:
         raise click.ClickException(f"Failed to list models for {provider_name}: {exc}") from exc
 
 
+@cli.command("diagnostics")
+def diagnostics() -> None:
+    """Show startup diagnostics and system status."""
+    import aibenchmark.plugins  # noqa: F401
+    from aibenchmark.app.engine import BenchEngine
+
+    try:
+        engine = BenchEngine()
+    except RuntimeError as exc:
+        raise click.ClickException(str(exc)) from exc
+    click.echo(engine.diagnostics_summary())
+
+
 @cli.command("providers")
 def providers() -> None:
     """List all registered providers."""

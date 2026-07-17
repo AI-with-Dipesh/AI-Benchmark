@@ -1,0 +1,43 @@
+{
+  "timestamp": "2026-07-17T06:44:01.591263+00:00",
+  "results": [
+    "Full test suite: PASS",
+    "  500 passed, 6 skipped, 1 warning in 33.49s",
+    "Application launch: PASS",
+    "End-to-end workflow: PASS",
+    "  Providers: 4, Benchmarks: 9",
+    "  Recommendations: 9, Team: 8, Leaderboard: 1, Trends: 3",
+    "Performance measurement: PASS",
+    "  test_suite_duration_seconds: 34.28",
+    "  test_summary: 500 passed, 6 skipped, 1 warning in 33.49s",
+    "  recommendation_latency_ms: 0.28",
+    "  team_latency_ms: 0.32",
+    "  leaderboard_latency_ms: 0.03",
+    "  db_query_latency_ms: 0.61",
+    "  memory_usage_kb: 245384",
+    "Stress test: PASS",
+    "  100_recommendations_ms: 23.33",
+    "  20_routing_generations_ms: 3307.91",
+    "  large_trends_ms: 0.7",
+    "Reliability components: PASS",
+    "  ExecutionPolicy: OK",
+    "  RateLimitDetector: OK",
+    "Defect scan: PASS",
+    "Benchmark data validation: PASS (13 runs)"
+  ],
+  "warnings": [],
+  "errors": [],
+  "perf_metrics": {
+    "test_suite_duration_seconds": 34.28,
+    "test_summary": "500 passed, 6 skipped, 1 warning in 33.49s",
+    "recommendation_latency_ms": 0.28,
+    "team_latency_ms": 0.32,
+    "leaderboard_latency_ms": 0.03,
+    "db_query_latency_ms": 0.61,
+    "memory_usage_kb": 245384,
+    "100_recommendations_ms": 23.33,
+    "20_routing_generations_ms": 3307.91,
+    "large_trends_ms": 0.7
+  },
+  "verdict": "READY"
+}

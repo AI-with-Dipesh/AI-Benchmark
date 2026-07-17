@@ -1,0 +1,110 @@
+{
+  "generated_at": "2026-07-17T05:30:55.070781+00:00",
+  "benchmark_version": "1.3.0",
+  "status": "PENDING_EXECUTION",
+  "execution_blocker": "No API credentials configured. Providers: openrouter (OPENROUTER_API_KEY), nvidia (NVIDIA_API_KEY), huggingface (HF_API_KEY), ollama (no local instance). Credential validation returned INVALID for all providers.",
+  "free_models_discovered": 23,
+  "paid_models_discovered": 317,
+  "total_models": 344,
+  "categories": {
+    "coding": {
+      "primary_model": "PENDING",
+      "fallback_model": "PENDING",
+      "confidence": 0.0,
+      "evidence": "BLOCKED"
+    },
+    "debugging": {
+      "primary_model": "PENDING",
+      "fallback_model": "PENDING",
+      "confidence": 0.0,
+      "evidence": "BLOCKED"
+    },
+    "architecture": {
+      "primary_model": "PENDING",
+      "fallback_model": "PENDING",
+      "confidence": 0.0,
+      "evidence": "BLOCKED"
+    },
+    "documentation": {
+      "primary_model": "PENDING",
+      "fallback_model": "PENDING",
+      "confidence": 0.0,
+      "evidence": "BLOCKED"
+    },
+    "reasoning": {
+      "primary_model": "PENDING",
+      "fallback_model": "PENDING",
+      "confidence": 0.0,
+      "evidence": "BLOCKED"
+    },
+    "security": {
+      "primary_model": "PENDING",
+      "fallback_model": "PENDING",
+      "confidence": 0.0,
+      "evidence": "BLOCKED"
+    },
+    "testing": {
+      "primary_model": "PENDING",
+      "fallback_model": "PENDING",
+      "confidence": 0.0,
+      "evidence": "BLOCKED"
+    },
+    "code_review": {
+      "primary_model": "PENDING",
+      "fallback_model": "PENDING",
+      "confidence": 0.0,
+      "evidence": "BLOCKED"
+    },
+    "refactoring": {
+      "primary_model": "PENDING",
+      "fallback_model": "PENDING",
+      "confidence": 0.0,
+      "evidence": "BLOCKED"
+    },
+    "system_design": {
+      "primary_model": "PENDING",
+      "fallback_model": "PENDING",
+      "confidence": 0.0,
+      "evidence": "BLOCKED"
+    },
+    "overall_engineering": {
+      "primary_model": "PENDING",
+      "fallback_model": "PENDING",
+      "confidence": 0.0,
+      "evidence": "BLOCKED"
+    }
+  },
+  "free_model_rankings": {
+    "best_overall": "PENDING",
+    "best_coding": "PENDING",
+    "best_debugging": "PENDING",
+    "best_architecture": "PENDING",
+    "best_documentation": "PENDING",
+    "best_reasoning": "PENDING",
+    "best_security": "PENDING",
+    "best_testing": "PENDING",
+    "best_refactoring": "PENDING",
+    "best_long_context": "PENDING",
+    "best_fast_model": "PENDING",
+    "best_value_model": "PENDING",
+    "most_reliable": "PENDING",
+    "most_consistent": "PENDING"
+  },
+  "overall_best_models": {
+    "best_overall": "PENDING",
+    "best_free": "PENDING",
+    "best_paid": "PENDING",
+    "best_coding": "PENDING",
+    "best_debugging": "PENDING",
+    "best_architecture": "PENDING",
+    "best_documentation": "PENDING",
+    "best_reasoning": "PENDING",
+    "best_security": "PENDING",
+    "best_testing": "PENDING",
+    "best_long_context": "PENDING",
+    "best_fast": "PENDING",
+    "best_value": "PENDING",
+    "most_reliable": "PENDING",
+    "most_consistent": "PENDING"
+  }
+}

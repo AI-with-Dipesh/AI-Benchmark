@@ -1,0 +1,3 @@
+rank,model,provider,corrected_overall,coding,debugging,reasoning,research,code_review,json,instruction,general,latency,benchmark_count
+1,tencent/hy3:free,openrouter,0.5240,0.750,0.120,0.674,0.863,0.642,0.000,0.039,0.121,0.623,9
+2,openrouter/free,openrouter,0.0582,0.600,0.120,0.737,0.633,0.381,0.000,0.039,0.365,0.640,9

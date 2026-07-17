@@ -1,0 +1,133 @@
+{
+  "generated_at": "2026-07-17T06:16:09.962537+00:00",
+  "source": "history.runs=1",
+  "recommendations": [
+    {
+      "category": "coding",
+      "model": "tencent/hy3:free",
+      "provider": "openrouter",
+      "confidence": 0.86,
+      "confidence_label": "High",
+      "reasons": [
+        "Highest category score"
+      ],
+      "score": 0.75,
+      "overall": 0.5239,
+      "category_weight": 25.0,
+      "rejection_reasons": {}
+    },
+    {
+      "category": "debugging",
+      "model": "tencent/hy3:free",
+      "provider": "openrouter",
+      "confidence": 0.42,
+      "confidence_label": "Medium",
+      "reasons": [
+        "Best available score for category"
+      ],
+      "score": 0.12,
+      "overall": 0.5239,
+      "category_weight": 20.0,
+      "rejection_reasons": {}
+    },
+    {
+      "category": "reasoning",
+      "model": "tencent/hy3:free",
+      "provider": "openrouter",
+      "confidence": 0.75,
+      "confidence_label": "Medium",
+      "reasons": [
+        "Highest category score",
+        "Strong all-round performance"
+      ],
+      "score": 0.6738,
+      "overall": 0.5239,
+      "category_weight": 15.0,
+      "rejection_reasons": {}
+    },
+    {
+      "category": "research",
+      "model": "tencent/hy3:free",
+      "provider": "openrouter",
+      "confidence": 0.86,
+      "confidence_label": "High",
+      "reasons": [
+        "Highest category score"
+      ],
+      "score": 0.8625,
+      "overall": 0.5239,
+      "category_weight": 15.0,
+      "rejection_reasons": {}
+    },
+    {
+      "category": "code_review",
+      "model": "tencent/hy3:free",
+      "provider": "openrouter",
+      "confidence": 0.7,
+      "confidence_label": "Medium",
+      "reasons": [
+        "Highest category score"
+      ],
+      "score": 0.6416,
+      "overall": 0.5239,
+      "category_weight": 10.0,
+      "rejection_reasons": {}
+    },
+    {
+      "category": "latency",
+      "model": "tencent/hy3:free",
+      "provider": "openrouter",
+      "confidence": 0.76,
+      "confidence_label": "Medium",
+      "reasons": [
+        "Best available score for category"
+      ],
+      "score": 0.6226,
+      "overall": 0.5239,
+      "category_weight": 10.0,
+      "rejection_reasons": {}
+    },
+    {
+      "category": "instruction",
+      "model": "tencent/hy3:free",
+      "provider": "openrouter",
+      "confidence": 0.38,
+      "confidence_label": "Low",
+      "reasons": [
+        "Best available score for category"
+      ],
+      "score": 0.0389,
+      "overall": 0.5239,
+      "category_weight": 5.0,
+      "rejection_reasons": {}
+    },
+    {
+      "category": "general",
+      "model": "tencent/hy3:free",
+      "provider": "openrouter",
+      "confidence": 0.39,
+      "confidence_label": "Medium",
+      "reasons": [
+        "Best available score for category"
+      ],
+      "score": 0.1213,
+      "overall": 0.5239,
+      "category_weight": 5.0,
+      "rejection_reasons": {}
+    },
+    {
+      "category": "json",
+      "model": "tencent/hy3:free",
+      "provider": "openrouter",
+      "confidence": 0.25,
+      "confidence_label": "Low",
+      "reasons": [
+        "Best available score for category"
+      ],
+      "score": 0.0,
+      "overall": 0.5239,
+      "category_weight": 5.0,
+      "rejection_reasons": {}
+    }
+  ]
+}

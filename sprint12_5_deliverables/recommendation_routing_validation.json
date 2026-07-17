@@ -1,0 +1,30 @@
+{
+  "timestamp": "2026-07-17T06:44:33.820695+00:00",
+  "results": [
+    "Recommendation validation: PASS",
+    "  Stability: stable=False, flips=5",
+    "Routing validation: 0/8 categories routed",
+    "Historical validation: PASS",
+    "  Recent performance entries: 5",
+    "  Recent runs: 10",
+    "  Trend entries: 3",
+    "  Comparison categories: 9",
+    "Performance benchmarks: FAIL"
+  ],
+  "warnings": [
+    "Recommendation instability detected: 5 flips",
+    "Routing failed for coding: No eligible provider/model found for coding",
+    "Routing failed for debugging: No eligible provider/model found for debugging",
+    "Routing failed for reasoning: No eligible provider/model found for reasoning",
+    "Routing failed for research: No eligible provider/model found for research",
+    "Routing failed for json: No eligible provider/model found for json",
+    "Routing failed for general: No eligible provider/model found for general",
+    "Routing failed for instruction: No eligible provider/model found for instruction",
+    "Routing failed for code_review: No eligible provider/model found for code_review"
+  ],
+  "errors": [
+    "perf_bench: name 'perf_metrics' is not defined"
+  ],
+  "routing_tests_count": 0,
+  "total_tests": 8
+}
