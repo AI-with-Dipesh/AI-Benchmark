@@ -831,5 +831,10 @@ def _parse_latency(result: Any) -> float | None:
         return None
 
 
+from aibenchmark.cli_automation import automation as automation_group
+
+cli.add_command(automation_group)
+
+
 if __name__ == "__main__":
     main()

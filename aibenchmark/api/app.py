@@ -16,6 +16,7 @@ from aibenchmark.api.routes.recommendations import router as recommendations_rou
 from aibenchmark.api.routes.reports import router as reports_router
 from aibenchmark.api.routes.routing import router as routing_router
 from aibenchmark.api.routes.system import router as system_router
+from aibenchmark.api.routes.automation import router as automation_router
 
 logger = logging.getLogger(__name__)
 
@@ -58,6 +59,7 @@ def create_app() -> FastAPI:
     app.include_router(analytics_router, prefix="/api/v1")
     app.include_router(reports_router, prefix="/api/v1")
     app.include_router(config_router, prefix="/api/v1")
+    app.include_router(automation_router, prefix="/api/v1")
 
     return app
 
