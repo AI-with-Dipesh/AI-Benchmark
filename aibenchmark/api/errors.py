@@ -58,6 +58,18 @@ def register_exception_handlers(app: FastAPI) -> None:
         )
         return JSONResponse(status_code=status.HTTP_400_BAD_REQUEST, content=jsonable_encoder(payload))
 
+    from aibenchmark.app.config import ConfigError as _ConfigError
+
+    @app.exception_handler(_ConfigError)
+    async def config_error_handler(request: Request, exc: _ConfigError):
+        payload = ErrorResponse(
+            error="BadRequest",
+            detail=str(exc),
+            request_id=getattr(request.state, "request_id", None),
+            correlation_id=getattr(request.state, "correlation_id", None),
+        )
+        return JSONResponse(status_code=status.HTTP_400_BAD_REQUEST, content=jsonable_encoder(payload))
+
     @app.exception_handler(Exception)
     async def generic_exception_handler(request: Request, exc: Exception):
         payload = ErrorResponse(
@@ -67,10 +79,3 @@ def register_exception_handlers(app: FastAPI) -> None:
             correlation_id=getattr(request.state, "correlation_id", None),
         )
         return JSONResponse(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, content=jsonable_encoder(payload))
-
-
-def _http_status_from_exc(exc: Exception) -> int:
-    from aibenchmark.app.config import ConfigError
-    if isinstance(exc, ConfigError):
-        return status.HTTP_400_BAD_REQUEST
-    return status.HTTP_500_INTERNAL_SERVER_ERROR
